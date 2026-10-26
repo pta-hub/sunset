@@ -29,9 +29,9 @@ Tornado listens on `0.0.0.0:8000` by default. Set `HOST` or `PORT` to change its
 
 ## Render deployment
 
-Use a persistent PostgreSQL database for production. Add the database's internal connection URL as the Render service environment variable `DATABASE_URL`; when that variable is present Django uses PostgreSQL, while local development continues to use SQLite. Install dependencies with `pip install -r requirements.txt` and set `DJANGO_SECRET_KEY` in Render. `DJANGO_DEBUG` defaults to `false` on Render.
+Create a Render Web Service with the service root directory set to `m4c-main` (the directory containing `manage.py` and `requirements.txt`). Use `pip install -r requirements.txt` as the build command and `python manage.py migrate --noinput && python run_tornado.py` as the start command. The repository Procfile has the same start command, but an explicit Render dashboard Start Command overrides it.
 
-The web start command must run migrations before serving: `python manage.py migrate --noinput && python run_tornado.py`. The repository Procfile uses this command, but an explicit Render dashboard Start Command overrides the Procfile and must be updated to match. This ensures `auth_user` and the member profile tables exist before `/register/` handles requests. Django also trusts Render's forwarded HTTPS scheme so CSRF protection recognizes secure login and registration posts behind Render's TLS proxy.
+Use a persistent PostgreSQL database for production and set the Render service environment variables `DATABASE_URL` to the database's internal connection URL and `DJANGO_SECRET_KEY` to a secure secret value. Django uses PostgreSQL when `DATABASE_URL` is set and SQLite for local development; `DJANGO_DEBUG` defaults to `false` on Render. The start command applies migrations before serving so the auth and member profile tables exist before registration requests. Django also trusts Render's forwarded HTTPS scheme so CSRF protection recognizes secure login and registration posts behind Render's TLS proxy.
 
 The volunteer registration endpoint accepts JSON at `POST /api/volunteers`. Browser submissions include Django's CSRF token.
 
