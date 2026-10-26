@@ -73,22 +73,22 @@ COMRADES_ROLES = [
 
 LEADERSHIP_PROFILES = [
     {
-        "image": "images/National_chair_chief.jpeg",
-        "name": "",
+        "image": "images/national-chair-chief.jpeg",
+        "name": "Boaz Nyambune",
         "role": "National Chair",
     },
     {
-        "image": "images/Kimani_w_Brian_National_secretary.jpeg",
+        "image": "images/kimani-w-brian-national-secretary.jpeg",
         "name": "Kimani W. Brian",
         "role": "National Secretary",
     },
     {
-        "image": "images/Joseph_masini_National_coodinater.jpeg",
+        "image": "images/joseph-masini-national-coordinator.jpeg",
         "name": "Joseph Masini",
         "role": "National Coordinator",
     },
     {
-        "image": "images/[1201 PM, 1072026]National finance and resource mobilization  Rob Jillo.jpeg",
+        "image": "images/rob-jilo-national-finance-resource-mobilization.jpeg",
         "name": "Rob Jilo",
         "role": "National Finance & Resource Mobilization",
     },

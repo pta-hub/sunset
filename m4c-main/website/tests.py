@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core import mail
+from django.contrib.staticfiles.finders import find
 from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
@@ -52,12 +53,21 @@ class OrganizationPagesTests(SimpleTestCase):
         self.assertNotContains(response, "Chief")
         self.assertNotContains(response, "Chief, National Secretary")
         self.assertContains(response, "National Chair")
+        self.assertContains(response, "Boaz Nyambune")
+        self.assertContains(response, "/static/images/national-chair-chief.jpeg")
+        self.assertIsNotNone(find("images/national-chair-chief.jpeg"))
+        self.assertContains(response, "/static/images/kimani-w-brian-national-secretary.jpeg")
+        self.assertIsNotNone(find("images/kimani-w-brian-national-secretary.jpeg"))
         self.assertContains(response, "Deputy Patron")
         self.assertContains(response, "Special Programmes / Stakeholder Relations")
         self.assertContains(response, "Kimani W. Brian")
         self.assertContains(response, "National Secretary")
         self.assertContains(response, "Joseph Masini")
+        self.assertContains(response, "/static/images/joseph-masini-national-coordinator.jpeg")
+        self.assertIsNotNone(find("images/joseph-masini-national-coordinator.jpeg"))
         self.assertContains(response, "Rob Jilo")
+        self.assertContains(response, "/static/images/rob-jilo-national-finance-resource-mobilization.jpeg")
+        self.assertIsNotNone(find("images/rob-jilo-national-finance-resource-mobilization.jpeg"))
         self.assertContains(response, "Jared Opiyo")
         self.assertContains(response, "National Operations")
         self.assertContains(response, "images/Jared_opiyo_National_operations.jpeg")
