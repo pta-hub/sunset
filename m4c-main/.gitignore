@@ -6,6 +6,7 @@ db.sqlite3
 staticfiles/
 .env
 .env.*
+.django_secret_key
 .DS_Store
 *.pem
 .vscode/*

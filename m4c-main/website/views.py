@@ -1,22 +1,19 @@
 import json
-import logging
 from pathlib import Path
 
 from django.conf import settings
-from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.views.csrf import csrf_failure as default_csrf_failure
 from django.views.decorators.http import require_POST
 
 from .forms import MemberCreationForm
-from .models import VerificationCode
-from .verification import VerificationError, issue_verification_code, verify_code
-
-logger = logging.getLogger(__name__)
+from .models import VolunteerRegistration
 
 COUNTIES = [
     "Mombasa", "Kwale", "Kilifi", "Tana River", "Lamu", "Taita-Taveta", "Garissa", "Wajir", "Mandera", "Marsabit",
@@ -44,21 +41,21 @@ STATS = [
 ]
 
 NATIONAL_LEADERSHIP = [
-    "National Patron", "Deputy Patron", "Secretary", "Mobilization / Organizing",
+    "Patron", "Deputy Patron", "Secretary", "Mobilization / Organizing",
     "Communications / Digital", "Youth Groups Lead", "Women Groups Lead",
     "Finance / Resources", "Research / Data", "Discipline / Ethics",
     "Special Programmes / Stakeholder Relations",
 ]
 
 REGIONAL_LEADERSHIP = [
-    "Regional Patron", "Deputy Patron", "Secretary", "Mobilization / Organizing",
+    "Patron", "Deputy Patron", "Secretary", "Mobilization / Organizing",
     "Communications / Digital", "Youth Groups Lead", "Women Groups Lead",
     "Finance / Resources", "Research / Data", "Discipline / Ethics",
     "Special Programmes / Stakeholder Relations",
 ]
 
 COUNTY_LEADERSHIP = [
-    "County Patron", "Deputy Patron", "Secretary", "Mobilization / Organizing",
+    "Patron", "Deputy Patron", "Secretary", "Mobilization / Organizing",
     "Communications / Digital", "Youth Groups Lead", "Women Groups Lead",
     "Finance / Resources", "Research / Data", "Discipline / Ethics",
     "Special Programmes / Stakeholder Relations",
@@ -74,7 +71,7 @@ COMRADES_ROLES = [
 LEADERSHIP_PROFILES = [
     {
         "image": "images/national-chair-chief.jpeg",
-        "name": "Boaz Nyambune",
+        "name": "",
         "role": "National Chair",
     },
     {
@@ -190,10 +187,7 @@ def register(request):
     if request.method == "POST" and form.is_valid():
         user = form.save()
         login(request, user)
-        is_secure_deployment = (
-            request.is_secure() or request.META.get("HTTP_X_FORWARDED_PROTO") == "https"
-        ) and request.get_host().endswith("onrender.com")
-        return redirect("verify-account" if is_secure_deployment else "home")
+        return redirect("home")
 
     return render(request, "register.html", {"form": form})
 
@@ -201,41 +195,6 @@ def register(request):
 @login_required
 def profile(request):
     return render(request, "profile.html", {"profile": request.user.member_profile})
-
-
-@login_required
-def verify_account(request):
-    profile = request.user.member_profile
-    if request.method == "POST":
-        channel_value = request.POST.get("channel", "")
-        action = request.POST.get("action", "")
-        channel = VerificationCode.Channel(channel_value) if channel_value in {"email", "phone"} else None
-
-        if action == "resend" and channel is not None:
-            try:
-                issue_verification_code(request.user, channel, request=request)
-            except VerificationError as exc:
-                messages.error(request, str(exc))
-            else:
-                messages.success(request, f"A new {channel.label.lower()} verification code has been sent.")
-            return redirect("verify-account")
-
-        if action == "verify" and channel is not None:
-            code = (request.POST.get("code") or "").strip()
-            if not code:
-                messages.error(request, "Enter the 6-digit code from your message.")
-            else:
-                ok, message = verify_code(request.user, channel, code)
-                if ok:
-                    messages.success(request, message)
-                else:
-                    messages.error(request, message)
-            return redirect("verify-account")
-
-        messages.error(request, "That verification request could not be processed.")
-        return redirect("verify-account")
-
-    return render(request, "verify_account.html", {"profile": profile})
 
 
 def csrf_failure(request, reason=""):
@@ -257,17 +216,37 @@ def volunteer_registration(request):
     if not isinstance(payload, dict):
         return JsonResponse({"message": "Invalid request body"}, status=400)
 
-    field_names = ("fullName", "phoneNumber", "county", "interest", "email")
-    data = {
-        name: payload.get(name, "").strip() if isinstance(payload.get(name, ""), str) else ""
-        for name in field_names
+    aliases = {
+        "full_name": ("fullName", "full_name"),
+        "phone_number": ("phoneNumber", "phone_number"),
+        "county": ("county",),
+        "interest": ("interest",),
+        "email": ("email",),
     }
+    data = {}
+    for field_name, keys in aliases.items():
+        value = next((payload[key] for key in keys if key in payload), "")
+        if not isinstance(value, str):
+            return JsonResponse({"message": f"{field_name} must be a string"}, status=400)
+        data[field_name] = value.strip()
 
-    if any(not data[name] for name in field_names[:4]):
-        return JsonResponse({"message": "Missing required fields"}, status=400)
+    for field_name in ("full_name", "phone_number", "county", "interest"):
+        if not data[field_name]:
+            return JsonResponse({"message": f"{field_name} is required"}, status=400)
 
-    logger.info("New volunteer registration: %s", data)
+    limits = {"full_name": 150, "phone_number": 32, "county": 80, "interest": 80}
+    for field_name, limit in limits.items():
+        if len(data[field_name]) > limit:
+            return JsonResponse({"message": f"{field_name} must be {limit} characters or fewer"}, status=400)
+
+    if data["email"]:
+        try:
+            validate_email(data["email"])
+        except ValidationError:
+            return JsonResponse({"message": "Enter a valid email address"}, status=400)
+
+    registration = VolunteerRegistration.objects.create(**data)
     return JsonResponse({
-        "message": "Thank you! Welcome to M4C. Check your WhatsApp for next steps!",
-        "data": data,
-    })
+        "message": "Thank you for registering as an M4C volunteer.",
+        "registration_id": registration.pk,
+    }, status=201)

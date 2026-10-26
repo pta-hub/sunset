@@ -46,7 +46,7 @@
         <div class="leader-profile-grid">
           {% for profile in leadership_profiles %}
             <article class="leader-profile">
-              <img class="leader-profile-photo" src="{% static profile.image %}" alt="{{ profile.name }}" loading="lazy">
+              <img class="leader-profile-photo" src="{% static profile.image %}" alt="{{ profile.name|default:profile.role }}" loading="lazy">
               <div class="leader-profile-copy">
                 {% if profile.name %}<h3>{{ profile.name }}</h3>{% endif %}
                 <p>{{ profile.role }}</p>
@@ -59,7 +59,7 @@
       <section class="structure-section">
         <div class="section-heading">
           <p class="eyebrow">National structure</p>
-          <h2>National Leadership <span>11 members</span></h2>
+          <h2>National Leadership <span>Roles and structure</span></h2>
         </div>
         <ol class="role-list">
           {% for role in national_leadership %}
@@ -71,7 +71,7 @@
       <section class="structure-section">
         <div class="section-heading">
           <p class="eyebrow">Regional engagement</p>
-          <h2>Regional Leadership <span>11 members per region</span></h2>
+          <h2>Regional Leadership <span>Roles and structure</span></h2>
         </div>
         <ol class="role-list">
           {% for role in regional_leadership %}
@@ -83,7 +83,7 @@
       <section class="structure-section">
         <div class="section-heading">
           <p class="eyebrow">County structure</p>
-          <h2>County Leadership <span>11 members per county</span></h2>
+          <h2>County Leadership <span>Roles and structure</span></h2>
         </div>
         <ol class="role-list">
           {% for role in county_leadership %}
