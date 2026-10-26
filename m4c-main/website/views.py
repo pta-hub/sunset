@@ -70,8 +70,8 @@ COMRADES_ROLES = [
 
 LEADERSHIP_PROFILES = [
     {
-        "image": "images/national-chair-chief.jpeg",
-        "name": "",
+        "image": "images/boaz-nyambune-national-chair.jpeg",
+        "name": "Boaz Nyambune",
         "role": "National Chair",
     },
     {
