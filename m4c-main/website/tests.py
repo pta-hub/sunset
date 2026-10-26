@@ -44,9 +44,9 @@ class PublicPageTests(SimpleTestCase):
         self.assertContains(response, "Regional Leadership")
         self.assertContains(response, "County Leadership")
         self.assertNotContains(response, "11 members")
-        self.assertNotContains(response, "Boaz Nyambune")
         self.assertContains(response, "National Chair")
         for name in (
+            "Boaz Nyambune",
             "Kimani W. Brian",
             "Joseph Masini",
             "Rob Jilo",
