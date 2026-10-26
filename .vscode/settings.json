@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^unzip -l m4c-main\\.zip \\| head -60$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
