@@ -9,6 +9,7 @@
     <script src="{% static 'js/site.js' %}" defer></script>
   </head>
   <body class="page-shell">
+    {% include "partials/contact_buttons.html" %}
     <header class="site-header" id="siteHeader">
       <div class="header-inner page-width">
         <a class="brand" href="{% url 'home' %}">

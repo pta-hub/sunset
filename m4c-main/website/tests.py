@@ -24,6 +24,9 @@ class PublicPageTests(SimpleTestCase):
         self.assertContains(response, "csrfmiddlewaretoken")
         self.assertContains(response, 'action="/register/"')
         self.assertContains(response, 'action="/login/"')
+        self.assertContains(response, 'href="tel:+254702154221"')
+        self.assertContains(response, 'href="mailto:infomovementforchange.co@gmail.com"')
+        self.assertContains(response, 'class="contact-buttons"')
         for field in ("full_name", "username", "county", "interest", "email", "phone_number", "password1", "password2"):
             self.assertContains(response, f'name="{field}"')
         for stock_image in ("politician-1.jpeg", "politician-2.jpeg", "politician-3.jpeg"):
@@ -32,9 +35,13 @@ class PublicPageTests(SimpleTestCase):
     def test_public_routes_and_unknown_county(self):
         for route in ("home", "leadership", "comrades", "counties"):
             with self.subTest(route=route):
-                self.assertEqual(self.client.get(reverse(route)).status_code, 200)
+                response = self.client.get(reverse(route))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'class="contact-buttons"')
 
-        self.assertEqual(self.client.get(reverse("county-detail", args=("nairobi",))).status_code, 200)
+        county_response = self.client.get(reverse("county-detail", args=("nairobi",)))
+        self.assertEqual(county_response.status_code, 200)
+        self.assertContains(county_response, 'class="contact-buttons"')
         self.assertEqual(self.client.get(reverse("county-detail", args=("not-a-county",))).status_code, 404)
 
     def test_leadership_only_shows_confirmed_active_profiles_and_roles(self):
