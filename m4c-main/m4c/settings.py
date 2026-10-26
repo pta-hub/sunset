@@ -1,15 +1,37 @@
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+from django.core.management.utils import get_random_secret_key
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "m4c-development-key-change-before-deploying")
 DEBUG = os.environ.get("DJANGO_DEBUG", "false" if os.environ.get("RENDER") else "true").lower() == "true"
-ALLOWED_HOSTS = ["*"]
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured("DJANGO_SECRET_KEY must be set when DEBUG is false.")
+    SECRET_KEY = get_random_secret_key()
+
+configured_hosts = os.environ.get("DJANGO_ALLOWED_HOSTS", "")
+if configured_hosts:
+    ALLOWED_HOSTS = [host.strip() for host in configured_hosts.split(",") if host.strip()]
+elif os.environ.get("RENDER_EXTERNAL_HOSTNAME"):
+    ALLOWED_HOSTS = [os.environ["RENDER_EXTERNAL_HOSTNAME"]]
+else:
+    ALLOWED_HOSTS = ["*"] if DEBUG else ["movementforchange.co.ke", "www.movementforchange.co.ke"]
+
 CSRF_TRUSTED_ORIGINS = [
     "https://movementforchange.co.ke",
     "https://www.movementforchange.co.ke",
 ]
+CSRF_TRUSTED_ORIGINS.extend(
+    origin.strip()
+    for origin in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+)
+if os.environ.get("RENDER_EXTERNAL_HOSTNAME"):
+    CSRF_TRUSTED_ORIGINS.append(f"https://{os.environ['RENDER_EXTERNAL_HOSTNAME']}")
 codespace_name = os.environ.get("CODESPACE_NAME")
 forwarding_domain = os.environ.get("GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN")
 if os.environ.get("RENDER") or (codespace_name and forwarding_domain):
@@ -19,6 +41,11 @@ if codespace_name and forwarding_domain:
     CSRF_TRUSTED_ORIGINS.append(f"https://{codespace_name}-{codespace_port}.{forwarding_domain}")
 if DEBUG:
     CSRF_TRUSTED_ORIGINS.extend(("https://localhost:8000", "https://127.0.0.1:8000"))
+
+SECURE_SSL_REDIRECT = not DEBUG
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -39,7 +66,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "website.middleware.EmailVerificationMiddleware",
 ]
 
 ROOT_URLCONF = "m4c.urls"
@@ -102,7 +128,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
 }
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -120,9 +146,3 @@ DEFAULT_FROM_EMAIL = os.environ.get(
     "Movement for Change <noreply@movementforchange.co.ke>",
 )
 EMAIL_TIMEOUT = 10
-
-WHATSAPP_ACCESS_TOKEN = os.environ.get("WHATSAPP_ACCESS_TOKEN", "")
-WHATSAPP_PHONE_NUMBER_ID = os.environ.get("WHATSAPP_PHONE_NUMBER_ID", "")
-WHATSAPP_TEMPLATE_NAME = os.environ.get("WHATSAPP_TEMPLATE_NAME", "m4c_verification")
-WHATSAPP_TEMPLATE_LANGUAGE = os.environ.get("WHATSAPP_TEMPLATE_LANGUAGE", "en")
-WHATSAPP_GRAPH_API_VERSION = os.environ.get("WHATSAPP_GRAPH_API_VERSION", "v23.0")

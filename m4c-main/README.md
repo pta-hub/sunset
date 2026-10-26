@@ -1,40 +1,84 @@
 # Movement for Change (M4C)
 
-M4C is a Django website served either by Django's development server or by Tornado wrapping the Django WSGI application.
+M4C is a Django website for peacebuilding, community participation, and the
+movement's county and campus structures in Kenya.
 
-## Setup
+## Local setup
+
+Run these commands from `m4c-main`:
 
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python manage.py migrate
-```
-
-## Run
-
-Run Django directly:
-
-```sh
 python manage.py runserver 0.0.0.0:8000
 ```
 
-Or run the same Django application through Tornado:
+The default local database is SQLite. The homepage, leadership, Comrades, and
+county directory pages are available immediately; the interactive map uses
+the bundled county and ward GeoJSON data.
+
+To serve through Tornado instead, configure a secret and start the app:
 
 ```sh
+export DJANGO_SECRET_KEY="$(python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')"
 python run_tornado.py
 ```
 
-Tornado listens on `0.0.0.0:8000` by default. Set `HOST` or `PORT` to change its bind address.
+Tornado listens on `0.0.0.0:8000` by default. Set `HOST` or `PORT` to change
+the bind address. `sh start.sh` applies migrations and launches Tornado. For a
+local start without a configured key, set `DJANGO_DEBUG=true`; the script then
+stores a generated key in the ignored `.django_secret_key` file.
 
-## Render deployment
+## Configuration
 
-Create a Render Web Service with the service root directory set to `m4c-main` (the directory containing `manage.py` and `requirements.txt`). Use `pip install -r requirements.txt` as the build command and `python manage.py migrate --noinput && python run_tornado.py` as the start command. The repository Procfile has the same start command, but an explicit Render dashboard Start Command overrides it.
+- `DJANGO_SECRET_KEY`: required when `DJANGO_DEBUG=false`; keep it in the
+  hosting provider's secret store.
+- `DJANGO_DEBUG`: defaults to `true` for local development and `false` on
+  Render. Keep it disabled in production.
+- `DJANGO_ALLOWED_HOSTS`: optional comma-separated hostnames. Render's
+  `RENDER_EXTERNAL_HOSTNAME` is used when available.
+- `DJANGO_CSRF_TRUSTED_ORIGINS`: optional comma-separated HTTPS origins for
+  additional deployment domains.
+- `DATABASE_URL`: optional PostgreSQL URL. Without it, Django uses local
+  SQLite. Configure a persistent PostgreSQL database in production.
+- `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`,
+  `EMAIL_HOST_PASSWORD`, and `DEFAULT_FROM_EMAIL`: SMTP settings for password
+  reset messages. Without SMTP configuration, Django uses its console email
+  backend for local development.
 
-Use a persistent PostgreSQL database for production and set the Render service environment variables `DATABASE_URL` to the database's internal connection URL and `DJANGO_SECRET_KEY` to a secure secret value. Django uses PostgreSQL when `DATABASE_URL` is set and SQLite for local development; `DJANGO_DEBUG` defaults to `false` on Render. The start command applies migrations before serving so the auth and member profile tables exist before registration requests. Django also trusts Render's forwarded HTTPS scheme so CSRF protection recognizes secure login and registration posts behind Render's TLS proxy.
+The default sender is `Movement for Change
+<noreply@movementforchange.co.ke>`. In production, authorize the sender domain
+with the SMTP provider and configure SPF and DKIM. Password reset responses
+do not disclose whether an account exists.
 
-The volunteer registration endpoint accepts JSON at `POST /api/volunteers`. Browser submissions include Django's CSRF token.
+## Volunteer registrations and member accounts
 
-User accounts are stored in the configured SQLite database and managed by Django authentication. Run `python manage.py migrate` to create the auth tables. The homepage's Join M4C form and `/register/` both create the same member account. Members can sign in from the homepage's join section or at `/login/`, view their profile at `/profile/`, and verify contacts at `/verify/`; administrators can also manage accounts through `/admin/`.
+Member registration creates a Django account and signs the member in
+immediately; email and phone verification are not required. Members can sign
+in using their username or email, view `/profile/`, and reset passwords from
+`/password-reset/`.
 
-Registration sends email and WhatsApp verification codes immediately and keeps the member signed in while verification is pending. Members can sign in with their username or registered email address and request a password reset from `/login/`. Configure production SMTP with `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, and `DEFAULT_FROM_EMAIL`; the default sender is `Movement for Change <noreply@movementforchange.co.ke>`. The SMTP provider must authorize that sender/domain and have SPF and DKIM configured for reliable delivery. Configure WhatsApp Cloud API with `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, and an approved authentication template named by `WHATSAPP_TEMPLATE_NAME` (default `m4c_verification`) with one body code parameter. `WHATSAPP_TEMPLATE_LANGUAGE` defaults to `en`; `WHATSAPP_GRAPH_API_VERSION` defaults to `v23.0`. Keep provider credentials in deployment secrets, not source control. Codes expire after 10 minutes, are limited to five attempts, and can be resent once per minute.
+The CSRF-protected `POST /api/volunteers` endpoint accepts JSON using either
+camelCase (`fullName`, `phoneNumber`) or snake_case (`full_name`,
+`phone_number`) names. Successful submissions are stored and return HTTP 201
+with a registration ID. Django admins can manage member profiles and volunteer
+registrations at `/admin/`.
+
+## Deployment
+
+For Render, set the service root directory to `m4c-main`, configure
+`DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, and a persistent PostgreSQL
+`DATABASE_URL`, and use `pip install -r requirements.txt` as the build command.
+Use `sh start.sh` as the start command. The start script runs migrations before
+serving. Render's forwarded HTTPS scheme is trusted for CSRF handling.
+
+`docker-compose.base44.yml` provides a local Python 3.12 development container
+on host port 3000 and runs Django's auto-reloading development server.
+
+Run the test suite with:
+
+```sh
+python manage.py test
+```

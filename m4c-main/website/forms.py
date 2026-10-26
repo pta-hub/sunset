@@ -56,6 +56,12 @@ class MemberCreationForm(UserCreationForm):
             raise ValidationError("An account with this email address already exists.")
         return email
 
+    def clean_username(self):
+        return self.cleaned_data["username"].strip()
+
+    def clean_full_name(self):
+        return self.cleaned_data["full_name"].strip()
+
     def clean_phone_number(self):
         phone_number = re.sub(r"[^0-9+]", "", self.cleaned_data["phone_number"])
         if phone_number.startswith("00"):

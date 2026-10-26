@@ -170,12 +170,22 @@ if (countyMap) {
       if (level === 'counties') {
         path.addEventListener('click', () => showCounty(featureName));
         path.addEventListener('keydown', (event) => {
-          if (event.key === 'Enter' || event.key === ' ') showCounty(featureName);
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            showCounty(featureName);
+          }
         });
       } else {
-        path.addEventListener('click', () => {
+        const selectWard = () => {
           if (countyName) countyName.textContent = featureName;
           if (countySummary) countySummary.textContent = `${feature.properties.subcountyName} sub-county. Patron assignment is pending confirmation.`;
+        };
+        path.addEventListener('click', selectWard);
+        path.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            selectWard();
+          }
         });
       }
       countyMap.appendChild(path);

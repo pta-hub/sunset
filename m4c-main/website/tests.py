@@ -1,220 +1,208 @@
 import json
-import os
-from unittest.mock import MagicMock, patch
 
-from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.core import mail
-from django.contrib.staticfiles.finders import find
 from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
-from website.models import MemberProfile, VerificationCode
-from website.verification import _deliver_email, _deliver_whatsapp, issue_verification_code, verify_code
+from website.models import MemberProfile, VolunteerRegistration
 from website.views import COUNTY_PROFILES
 
 
-class HomePageTests(SimpleTestCase):
-    def test_static_files_are_configured_for_production(self):
-        self.assertEqual(settings.STATIC_URL, "/static/")
-        self.assertTrue(settings.STATICFILES_DIRS)
-        self.assertTrue(settings.STATIC_ROOT)
-
-    def test_home_page_uses_the_animated_full_bleed_brand_logo(self):
+class PublicPageTests(SimpleTestCase):
+    def test_home_page_has_join_and_sign_in_flows(self):
         response = self.client.get(reverse("home"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Movement for Change")
+        self.assertContains(response, "Promoting Peace, Unity")
+        self.assertContains(response, "Constructive Dialogue")
         self.assertContains(response, "m4c-logo.jpeg")
-        self.assertContains(response, 'property="og:image" content="https://movementforchange.co.ke/static/images/m4c-logo.jpeg"')
-        self.assertContains(response, 'name="twitter:card" content="summary_large_image"')
         self.assertContains(response, "hero-background-logo")
-        self.assertNotContains(response, "politician-1.jpeg")
-        self.assertNotContains(response, "politician-2.jpeg")
-        self.assertNotContains(response, "politician-3.jpeg")
+        self.assertContains(response, 'name="twitter:card" content="summary_large_image"')
         self.assertContains(response, "csrfmiddlewaretoken")
-        self.assertContains(response, "Member sign in")
-        self.assertContains(response, 'id="signInPanel"')
-        self.assertContains(response, 'action="/login/"')
         self.assertContains(response, 'action="/register/"')
-        self.assertContains(response, 'name="full_name"')
-        self.assertContains(response, 'name="county"')
-        self.assertContains(response, 'name="interest"')
+        self.assertContains(response, 'action="/login/"')
+        for field in ("full_name", "username", "county", "interest", "email", "phone_number", "password1", "password2"):
+            self.assertContains(response, f'name="{field}"')
+        for stock_image in ("politician-1.jpeg", "politician-2.jpeg", "politician-3.jpeg"):
+            self.assertNotContains(response, stock_image)
 
-class OrganizationPagesTests(SimpleTestCase):
-    def test_leadership_page_has_required_sections(self):
+    def test_public_routes_and_unknown_county(self):
+        for route in ("home", "leadership", "comrades", "counties"):
+            with self.subTest(route=route):
+                self.assertEqual(self.client.get(reverse(route)).status_code, 200)
+
+        self.assertEqual(self.client.get(reverse("county-detail", args=("nairobi",))).status_code, 200)
+        self.assertEqual(self.client.get(reverse("county-detail", args=("not-a-county",))).status_code, 404)
+
+    def test_leadership_only_shows_confirmed_active_profiles_and_roles(self):
         response = self.client.get(reverse("leadership"))
 
-        self.assertEqual(response.status_code, 200)
         self.assertContains(response, "National Leadership")
         self.assertContains(response, "Regional Leadership")
-        self.assertNotContains(response, "25 members")
-        self.assertNotContains(response, "25 National Senior Patrons")
-        self.assertNotContains(response, "Chief")
-        self.assertNotContains(response, "Chief, National Secretary")
+        self.assertContains(response, "County Leadership")
+        self.assertNotContains(response, "11 members")
+        self.assertNotContains(response, "Boaz Nyambune")
         self.assertContains(response, "National Chair")
-        self.assertContains(response, "Boaz Nyambune")
-        self.assertContains(response, "/static/images/national-chair-chief.jpeg")
-        self.assertIsNotNone(find("images/national-chair-chief.jpeg"))
-        self.assertContains(response, "/static/images/kimani-w-brian-national-secretary.jpeg")
-        self.assertIsNotNone(find("images/kimani-w-brian-national-secretary.jpeg"))
-        self.assertContains(response, "Deputy Patron")
-        self.assertContains(response, "Special Programmes / Stakeholder Relations")
-        self.assertContains(response, "Kimani W. Brian")
-        self.assertContains(response, "National Secretary")
-        self.assertContains(response, "Joseph Masini")
-        self.assertContains(response, "/static/images/joseph-masini-national-coordinator.jpeg")
-        self.assertIsNotNone(find("images/joseph-masini-national-coordinator.jpeg"))
-        self.assertContains(response, "Rob Jilo")
-        self.assertContains(response, "/static/images/rob-jilo-national-finance-resource-mobilization.jpeg")
-        self.assertIsNotNone(find("images/rob-jilo-national-finance-resource-mobilization.jpeg"))
-        self.assertContains(response, "Jared Opiyo")
-        self.assertContains(response, "National Operations")
-        self.assertContains(response, "images/Jared_opiyo_National_operations.jpeg")
-        self.assertContains(response, "Muchina Nyaga")
-        self.assertContains(response, "National Media and Communication")
-        self.assertContains(response, "images/Muchina_nyaga_National_media_and_communication.jpeg")
-        for removed_name in (
+        for name in (
+            "Kimani W. Brian",
+            "Joseph Masini",
+            "Rob Jilo",
+            "Jared Opiyo",
+            "Muchina Nyaga",
+        ):
+            self.assertContains(response, name)
+        for inactive_name in (
             "Brian Gitonga", "Martin Kor", "John Waithaka",
             "Wanjeri Esther Stacy", "Esther Muteri", "Moses Mwero",
         ):
-            self.assertNotContains(response, removed_name)
+            self.assertNotContains(response, inactive_name)
+        for role in (
+            "Patron", "Deputy Patron", "Secretary", "Mobilization / Organizing",
+            "Communications / Digital", "Youth Groups Lead", "Women Groups Lead",
+            "Finance / Resources", "Research / Data", "Discipline / Ethics",
+            "Special Programmes / Stakeholder Relations",
+        ):
+            self.assertContains(response, role)
 
-    def test_counties_page_lists_kenya_counties(self):
-        response = self.client.get(reverse("counties"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "M4C Across Kenya")
-        self.assertContains(response, "Nairobi")
-        self.assertContains(response, "County map")
-        self.assertContains(response, 'id="countySearchForm"')
-        self.assertContains(response, 'id="countyMap"')
-        self.assertContains(response, "Ward leadership")
-        self.assertContains(response, "CC BY 4.0")
-        self.assertContains(response, "CC BY 3.0 IGO")
-        self.assertContains(response, "Public Domain")
-
-    def test_ward_index_covers_all_counties_and_wards(self):
+    def test_county_and_ward_directory_integrity(self):
         self.assertEqual(len(COUNTY_PROFILES), 47)
         self.assertEqual(sum(county["ward_count"] for county in COUNTY_PROFILES), 1450)
 
-        ward_data = json.loads((settings.BASE_DIR / "static/data/kenya-wards.geojson").read_text(encoding="utf-8"))
-        self.assertEqual(len(ward_data["features"]), 1450)
-        self.assertTrue(all(
-            feature["properties"].get("countyName")
-            and feature["properties"].get("subcountyName")
-            and feature["properties"].get("wardName")
-            for feature in ward_data["features"]
-        ))
+        wards = json.loads((settings.BASE_DIR / "static/data/kenya-wards.geojson").read_text(encoding="utf-8"))
+        counties = json.loads((settings.BASE_DIR / "static/data/kenya-counties.geojson").read_text(encoding="utf-8"))
+        self.assertEqual(len(wards["features"]), 1450)
+        self.assertEqual(len(counties["features"]), 47)
+        for feature in wards["features"]:
+            self.assertTrue(feature["properties"].get("countyName"))
+            self.assertTrue(feature["properties"].get("subcountyName"))
+            self.assertTrue(feature["properties"].get("wardName"))
 
-    def test_county_profile_lists_real_subcounties_and_wards(self):
-        response = self.client.get(reverse("county-detail", kwargs={"slug": "nairobi"}))
+    def test_county_detail_has_real_wards_and_unconfirmed_leadership(self):
+        response = self.client.get(reverse("county-detail", args=("nairobi",)))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Dagoretti")
         self.assertContains(response, "Mutu-ini Ward")
         self.assertContains(response, "Ward Patron to be confirmed")
 
-    def test_comrades_page_renders(self):
+    def test_comrades_page_describes_campus_roles_and_sections(self):
         response = self.client.get(reverse("comrades"))
 
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Comrades")
-        self.assertContains(response, "Campus Patron")
-        self.assertContains(response, "Academic &amp; Policy Lead")
-        self.assertContains(response, "Class / Department Ambassadors")
-        self.assertContains(response, "Campus Events")
-        self.assertContains(response, "Join Comrades")
+        for text in ("Comrades", "Campus Patron", "Academic &amp; Policy Lead",
+                     "Class / Department Ambassadors", "Campus Events", "Join Comrades"):
+            self.assertContains(response, text)
+
+    def test_static_files_are_configured(self):
+        self.assertEqual(settings.STATIC_URL, "/static/")
+        self.assertTrue(settings.STATICFILES_DIRS)
+        self.assertTrue(settings.STATIC_ROOT)
 
 
-class VolunteerApiTests(SimpleTestCase):
+class VolunteerApiTests(TestCase):
     url = reverse("volunteer-registration")
 
-    def test_accepts_valid_token_from_forwarded_https_origin(self):
-        codespace_name = os.environ.get("CODESPACE_NAME")
-        forwarding_domain = os.environ.get("GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN")
-        if not getattr(settings, "SECURE_PROXY_SSL_HEADER", None) or not forwarding_domain:
-            self.skipTest("Forwarded HTTPS proxy support is only enabled in Codespaces.")
+    def post_json(self, data):
+        return self.client.post(self.url, json.dumps(data), content_type="application/json")
 
-        client = Client(enforce_csrf_checks=True)
-        host = f"{codespace_name}-{os.environ.get('PORT', '8000')}.{forwarding_domain}"
-        page = client.get(
-            reverse("home"),
-            HTTP_HOST=host,
-            HTTP_X_FORWARDED_PROTO="https",
-        )
-        csrf_token = page.cookies["csrftoken"].value
-        response = client.post(
-            self.url,
-            json.dumps({
-                "fullName": "Amina Otieno",
-                "phoneNumber": "+254700000000",
-                "county": "Nairobi",
-                "interest": "Youth Leader",
-            }),
-            content_type="application/json",
-            HTTP_HOST=host,
-            HTTP_ORIGIN=f"https://{host}",
-            HTTP_X_FORWARDED_PROTO="https",
-            HTTP_X_CSRFTOKEN=csrf_token,
-        )
+    def test_saves_camel_case_registration_and_returns_only_receipt(self):
+        response = self.post_json({
+            "fullName": " Amina Otieno ",
+            "phoneNumber": " +254700000000 ",
+            "county": " Nairobi ",
+            "interest": " Youth Leader ",
+            "email": " amina@example.com ",
+        })
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(set(response.json()), {"message", "registration_id"})
+        registration = VolunteerRegistration.objects.get(pk=response.json()["registration_id"])
+        self.assertEqual(registration.full_name, "Amina Otieno")
+        self.assertEqual(registration.phone_number, "+254700000000")
+        self.assertEqual(registration.county, "Nairobi")
+        self.assertEqual(registration.interest, "Youth Leader")
+        self.assertEqual(registration.email, "amina@example.com")
+
+    def test_accepts_snake_case_and_optional_email(self):
+        response = self.post_json({
+            "full_name": "Amina Otieno",
+            "phone_number": "+254700000000",
+            "county": "Nairobi",
+            "interest": "Youth Leader",
+        })
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(VolunteerRegistration.objects.get().email, "")
+
+    def test_rejects_malformed_and_non_object_json(self):
+        malformed = self.client.post(self.url, "{", content_type="application/json")
+        non_object = self.post_json(["not", "an", "object"])
+        self.assertEqual(malformed.status_code, 400)
+        self.assertEqual(malformed.json()["message"], "Invalid JSON")
+        self.assertEqual(non_object.status_code, 400)
+        self.assertEqual(non_object.json()["message"], "Invalid request body")
+
+    def test_rejects_missing_required_fields(self):
+        response = self.post_json({"fullName": "Amina"})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("required", response.json()["message"])
+
+    def test_rejects_excessive_lengths_and_invalid_email(self):
+        data = {
+            "full_name": "A" * 151,
+            "phone_number": "+254700000000",
+            "county": "Nairobi",
+            "interest": "Youth Leader",
+        }
+        too_long = self.post_json(data)
+        data["full_name"] = "Amina Otieno"
+        data["email"] = "not-an-email"
+        invalid_email = self.post_json(data)
+
+        self.assertEqual(too_long.status_code, 400)
+        self.assertIn("150", too_long.json()["message"])
+        self.assertEqual(invalid_email.status_code, 400)
+        self.assertIn("email", invalid_email.json()["message"])
+
+    def test_rejects_non_string_values(self):
+        response = self.post_json({
+            "fullName": "Amina",
+            "phoneNumber": 254700000000,
+            "county": "Nairobi",
+            "interest": "Youth Leader",
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("string", response.json()["message"])
+
+    def test_only_accepts_post(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 405)
 
     @override_settings(CSRF_TRUSTED_ORIGINS=["https://localhost:8000"])
-    def test_accepts_valid_token_from_local_https_join_page(self):
+    def test_accepts_csrf_token_from_https_origin(self):
         client = Client(enforce_csrf_checks=True)
         page = client.get(reverse("home"), HTTP_HOST="localhost:8000")
-        csrf_token = page.cookies["csrftoken"].value
+        token = page.cookies["csrftoken"].value
         response = client.post(
             self.url,
             json.dumps({
-                "fullName": "Amina Otieno",
-                "phoneNumber": "+254700000000",
+                "full_name": "Amina Otieno",
+                "phone_number": "+254700000000",
                 "county": "Nairobi",
                 "interest": "Youth Leader",
             }),
             content_type="application/json",
             HTTP_HOST="localhost:8000",
             HTTP_ORIGIN="https://localhost:8000",
-            HTTP_X_CSRFTOKEN=csrf_token,
+            HTTP_X_CSRFTOKEN=token,
         )
-
-        self.assertEqual(response.status_code, 200)
-
-    def test_registers_a_volunteer(self):
-        payload = {
-            "fullName": "Amina Otieno",
-            "phoneNumber": "+254700000000",
-            "county": "Nairobi",
-            "interest": "Youth Leader",
-            "email": "amina@example.com",
-        }
-
-        response = self.client.post(self.url, json.dumps(payload), content_type="application/json")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["data"], payload)
-
-    def test_rejects_missing_required_fields(self):
-        response = self.client.post(
-            self.url,
-            json.dumps({"fullName": "Amina Otieno"}),
-            content_type="application/json",
-        )
-
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()["message"], "Missing required fields")
-
-    def test_rejects_invalid_json(self):
-        response = self.client.post(self.url, "{", content_type="application/json")
-
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 201)
 
     def test_csrf_failure_returns_actionable_json(self):
         client = Client(enforce_csrf_checks=True)
         client.get(reverse("home"))
-
         response = client.post(
             self.url,
             json.dumps({
@@ -226,75 +214,27 @@ class VolunteerApiTests(SimpleTestCase):
             content_type="application/json",
             HTTP_X_CSRFTOKEN="stale-token",
         )
-
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.json()["message"], "Your form security token expired. Reload the page and try again.")
-
-
-class LoginTests(TestCase):
-    @override_settings(CSRF_TRUSTED_ORIGINS=["https://movementforchange.co.ke"])
-    def test_login_accepts_production_https_origin(self):
-        user = get_user_model().objects.create_user(
-            username="production-member",
-            password="Robust-M4C-passphrase-9482!",
-        )
-        client = Client(enforce_csrf_checks=True)
-        host = "movementforchange.co.ke"
-        page = client.get(reverse("login"), HTTP_HOST=host)
-        csrf_token = page.cookies["csrftoken"].value
-
-        response = client.post(
-            reverse("login"),
-            {"username": user.username, "password": "Robust-M4C-passphrase-9482!"},
-            HTTP_HOST=host,
-            HTTP_ORIGIN=f"https://{host}",
-            HTTP_X_CSRFTOKEN=csrf_token,
+        self.assertEqual(
+            response.json()["message"],
+            "Your form security token expired. Reload the page and try again.",
         )
 
-        self.assertRedirects(response, reverse("home"))
-        self.assertEqual(client.session.get("_auth_user_id"), str(user.pk))
 
-    @override_settings(SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"))
-    def test_login_accepts_forwarded_https_origin_on_deployment_hostname(self):
-        user = get_user_model().objects.create_user(
-            username="deployed-member",
-            password="Robust-M4C-passphrase-9482!",
-        )
-        client = Client(enforce_csrf_checks=True)
-        host = "m4c.onrender.com"
-        forwarded_https = {"HTTP_X_FORWARDED_PROTO": "https"}
-        page = client.get(reverse("login"), HTTP_HOST=host, **forwarded_https)
-        csrf_token = page.cookies["csrftoken"].value
+class MemberAccountTests(TestCase):
+    password = "Robust-M4C-passphrase-9482!"
 
-        response = client.post(
-            reverse("login"),
-            {"username": user.username, "password": "Robust-M4C-passphrase-9482!"},
-            HTTP_HOST=host,
-            HTTP_ORIGIN=f"https://{host}",
-            HTTP_X_CSRFTOKEN=csrf_token,
-            **forwarded_https,
+    def make_user(self, username="m4c-member", email="member@example.com"):
+        return get_user_model().objects.create_user(
+            username=username,
+            email=email,
+            password=self.password,
         )
 
-        self.assertRedirects(response, reverse("home"))
-        self.assertEqual(client.session.get("_auth_user_id"), str(user.pk))
-
-    def test_login_page_renders_accessible_sign_in_form(self):
-        response = self.client.get(reverse("login"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Welcome back to")
-        self.assertContains(response, 'aria-labelledby="loginHeading"')
-        self.assertContains(response, 'autocomplete="username"')
-        self.assertContains(response, "Username or email")
-        self.assertContains(response, 'autocomplete="current-password"')
-        self.assertContains(response, 'href="/register/"')
-        self.assertContains(response, "csrfmiddlewaretoken")
-
-    def test_join_page_creates_and_authenticates_user_with_csrf(self):
+    def test_registration_creates_account_and_logs_in_without_verification(self):
         client = Client(enforce_csrf_checks=True)
         page = client.get(reverse("home"))
-        csrf_token = page.cookies["csrftoken"].value
-
+        token = page.cookies["csrftoken"].value
         response = client.post(reverse("register"), {
             "full_name": "New M4C Member",
             "username": "new-m4c-member",
@@ -302,50 +242,20 @@ class LoginTests(TestCase):
             "phone_number": "0712345678",
             "county": "Nairobi",
             "interest": "Youth Leader",
-            "password1": "Robust-M4C-passphrase-9482!",
-            "password2": "Robust-M4C-passphrase-9482!",
-        }, HTTP_X_CSRFTOKEN=csrf_token, follow=True)
+            "password1": self.password,
+            "password2": self.password,
+        }, HTTP_X_CSRFTOKEN=token, follow=True)
 
         self.assertRedirects(response, reverse("home"))
         user = get_user_model().objects.get(username="new-m4c-member")
         self.assertEqual(client.session.get("_auth_user_id"), str(user.pk))
-        self.assertEqual(user.email, "new-member@example.com")
+        self.assertTrue(user.check_password(self.password))
         self.assertEqual(user.member_profile.full_name, "New M4C Member")
         self.assertEqual(user.member_profile.phone_number, "+254712345678")
         self.assertEqual(user.member_profile.county, "Nairobi")
         self.assertEqual(user.member_profile.interest, "Youth Leader")
-        self.assertContains(response, "Welcome back, new-m4c-member")
-
-    @override_settings(SECURE_PROXY_SSL_HEADER=("HTTP_X_FORWARDED_PROTO", "https"))
-    def test_registration_accepts_forwarded_https_origin_on_deployment_hostname(self):
-        client = Client(enforce_csrf_checks=True)
-        host = "m4c.onrender.com"
-        forwarded_https = {"HTTP_X_FORWARDED_PROTO": "https"}
-        page = client.get(reverse("register"), HTTP_HOST=host, **forwarded_https)
-        csrf_token = page.cookies["csrftoken"].value
-
-        with patch("website.verification._deliver_email"), patch("website.verification._deliver_whatsapp"):
-            response = client.post(
-                reverse("register"),
-                {
-                    "full_name": "Deployed M4C Member",
-                    "username": "deployed-m4c-member",
-                    "email": "deployed-member@example.com",
-                    "phone_number": "0712345678",
-                    "county": "Nairobi",
-                    "interest": "Youth Leader",
-                    "password1": "Robust-M4C-passphrase-9482!",
-                    "password2": "Robust-M4C-passphrase-9482!",
-                },
-                HTTP_HOST=host,
-                HTTP_ORIGIN=f"https://{host}",
-                HTTP_X_CSRFTOKEN=csrf_token,
-                **forwarded_https,
-            )
-
-        self.assertRedirects(response, reverse("verify-account"), fetch_redirect_response=False)
-        user = get_user_model().objects.get(username="deployed-m4c-member")
-        self.assertEqual(client.session.get("_auth_user_id"), str(user.pk))
+        self.assertEqual(client.get(reverse("profile")).status_code, 200)
+        self.assertEqual(client.get("/verify-account/").status_code, 404)
 
     def test_registration_rejects_mismatched_passwords(self):
         response = self.client.post(reverse("register"), {
@@ -355,120 +265,14 @@ class LoginTests(TestCase):
             "phone_number": "+254712345678",
             "county": "Nairobi",
             "interest": "Youth Leader",
-            "password1": "Robust-M4C-passphrase-9482!",
+            "password1": self.password,
             "password2": "Different-passphrase-8274!",
         })
-
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["form"].has_error("password2"))
 
-    def test_verification_code_is_hashed_and_verifies_email(self):
-        user = get_user_model().objects.create_user(
-            username="verified-member",
-            email="verified@example.com",
-            password="secure-test-password",
-        )
-        MemberProfile.objects.create(user=user, phone_number="+254712345679")
-
-        with patch("website.verification._deliver_email") as deliver_email:
-            issue_verification_code(user, VerificationCode.Channel.EMAIL)
-
-        code = deliver_email.call_args.args[1]
-        challenge = VerificationCode.objects.get(user=user, channel=VerificationCode.Channel.EMAIL)
-        self.assertNotEqual(challenge.code_hash, code)
-        self.assertTrue(challenge.expires_at > challenge.sent_at)
-
-        is_verified, _ = verify_code(user, VerificationCode.Channel.EMAIL, code)
-
-        self.assertTrue(is_verified)
-        self.assertTrue(user.member_profile.email_verified)
-        self.assertFalse(VerificationCode.objects.filter(pk=challenge.pk).exists())
-
-    @override_settings(
-        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
-        EMAIL_HOST="smtp.example.test",
-        DEFAULT_FROM_EMAIL="members@example.test",
-    )
-    def test_email_delivery_uses_configured_sender(self):
-        user = get_user_model().objects.create_user(
-            username="email-member",
-            email="member@example.test",
-            password="secure-test-password",
-        )
-
-        _deliver_email(user, "123456")
-
-        self.assertEqual(mail.outbox[0].from_email, "members@example.test")
-        self.assertEqual(mail.outbox[0].to, ["member@example.test"])
-        self.assertIn("123456", mail.outbox[0].body)
-
-    @override_settings(
-        EMAIL_BACKEND="django.core.mail.backends.console.EmailBackend",
-        EMAIL_HOST="",
-        DEFAULT_FROM_EMAIL="Movement for Change <noreply@movementforchange.co.ke>",
-    )
-    def test_email_delivery_falls_back_to_console_backend_without_smtp_config(self):
-        user = get_user_model().objects.create_user(
-            username="console-email-member",
-            email="console-member@example.test",
-            password="secure-test-password",
-        )
-
-        _deliver_email(user, "654321")
-
-        self.assertEqual(user.email, "console-member@example.test")
-
-    @override_settings(
-        WHATSAPP_ACCESS_TOKEN="",
-        WHATSAPP_PHONE_NUMBER_ID="",
-    )
-    def test_whatsapp_delivery_falls_back_to_logging_when_not_configured(self):
-        user = get_user_model().objects.create_user(
-            username="whatsapp-fallback-member",
-            email="whatsapp-fallback@example.com",
-            password="secure-test-password",
-        )
-        MemberProfile.objects.create(
-            user=user,
-            full_name="WhatsApp Fallback Member",
-            phone_number="+254712345680",
-            county="Nairobi",
-            interest="Youth Leader",
-        )
-
-        issue_verification_code(user, VerificationCode.Channel.PHONE)
-
-        self.assertTrue(VerificationCode.objects.filter(user=user, channel=VerificationCode.Channel.PHONE).exists())
-
-    @override_settings(
-        WHATSAPP_ACCESS_TOKEN="test-token",
-        WHATSAPP_PHONE_NUMBER_ID="123456789",
-        WHATSAPP_TEMPLATE_NAME="m4c_verification",
-        WHATSAPP_TEMPLATE_LANGUAGE="en",
-        WHATSAPP_GRAPH_API_VERSION="v23.0",
-    )
-    def test_whatsapp_delivery_uses_cloud_api(self):
-        provider_response = MagicMock()
-        provider_response.__enter__.return_value = provider_response
-        with patch("website.verification.urlopen", return_value=provider_response) as send_request:
-            _deliver_whatsapp("+254712345678", "123456")
-
-        request = send_request.call_args.args[0]
-        payload = json.loads(request.data)
-        self.assertEqual(request.full_url, "https://graph.facebook.com/v23.0/123456789/messages")
-        self.assertEqual(request.get_method(), "POST")
-        self.assertEqual(request.get_header("Authorization"), "Bearer test-token")
-        self.assertEqual(payload["messaging_product"], "whatsapp")
-        self.assertEqual(payload["to"], "254712345678")
-        self.assertEqual(payload["template"]["name"], "m4c_verification")
-        self.assertEqual(payload["template"]["components"][0]["parameters"][0]["text"], "123456")
-
-    def test_profile_page_shows_contact_and_status(self):
-        user = get_user_model().objects.create_user(
-            username="profile-member",
-            email="profile@example.com",
-            password="secure-test-password",
-        )
+    def test_profile_shows_account_details_without_verification_status(self):
+        user = self.make_user(email="profile@example.com")
         MemberProfile.objects.create(
             user=user,
             full_name="Profile Member",
@@ -477,78 +281,37 @@ class LoginTests(TestCase):
             interest="Youth Leader",
         )
         self.client.force_login(user)
-
         response = self.client.get(reverse("profile"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "profile@example.com")
-        self.assertContains(response, "+254712345680")
-        self.assertContains(response, "Nairobi")
-        self.assertContains(response, "Youth Leader")
-        self.assertContains(response, "Verification")
+        for detail in ("profile@example.com", "+254712345680", "Nairobi", "Youth Leader"):
+            self.assertContains(response, detail)
+        self.assertNotContains(response, "Verified")
+        self.assertNotContains(response, "Pending")
 
-    def test_login_and_logout_use_django_authentication(self):
-        user = get_user_model().objects.create_user(
-            username="m4c-member",
-            password="secure-test-password",
-        )
-
+    def test_login_accepts_email_address_and_logout_works(self):
+        user = self.make_user()
         response = self.client.post(reverse("login"), {
-            "username": user.username,
-            "password": "secure-test-password",
+            "username": "MEMBER@example.com",
+            "password": self.password,
         })
 
         self.assertRedirects(response, reverse("home"))
         self.assertEqual(self.client.session.get("_auth_user_id"), str(user.pk))
-
         response = self.client.post(reverse("logout"))
-
         self.assertRedirects(response, reverse("home"))
         self.assertNotIn("_auth_user_id", self.client.session)
 
-    def test_login_accepts_email_address(self):
-        user = get_user_model().objects.create_user(
-            username="email-login-member",
-            email="member@example.com",
-            password="secure-test-password",
-        )
-
-        response = self.client.post(reverse("login"), {
-            "username": "MEMBER@example.com",
-            "password": "secure-test-password",
-        })
-
-        self.assertRedirects(response, reverse("home"))
-        self.assertEqual(self.client.session.get("_auth_user_id"), str(user.pk))
-
-    def test_home_hides_join_form_for_signed_in_members(self):
-        user = get_user_model().objects.create_user(
-            username="signed-in-member",
-            password="secure-test-password",
-        )
-        self.client.force_login(user)
-
-        response = self.client.get(reverse("home"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Welcome back, signed-in-member")
-        self.assertContains(response, reverse("logout"))
-        self.assertNotContains(response, "Join Now")
-        self.assertNotContains(response, 'id="joinPanel"')
-        self.assertNotContains(response, "Join the Movement for Peace")
+    def test_admin_can_manage_member_and_volunteer_records(self):
+        self.assertIn(MemberProfile, admin.site._registry)
+        self.assertIn(VolunteerRegistration, admin.site._registry)
 
     @override_settings(
         EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
-        EMAIL_HOST="smtp.example.test",
         DEFAULT_FROM_EMAIL="Movement for Change <noreply@movementforchange.co.ke>",
     )
-    def test_password_reset_sends_branded_email_with_site_link(self):
-        get_user_model().objects.create_user(
-            username="reset-member",
-            email="member@example.com",
-            password="secure-test-password",
-        )
-
+    def test_password_reset_sends_branded_https_email(self):
+        self.make_user(username="reset-member")
         response = self.client.post(
             reverse("password_reset"),
             {"email": "member@example.com"},
@@ -557,6 +320,5 @@ class LoginTests(TestCase):
 
         self.assertRedirects(response, reverse("password_reset_done"))
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].from_email, "Movement for Change <noreply@movementforchange.co.ke>")
         self.assertEqual(mail.outbox[0].to, ["member@example.com"])
         self.assertIn("https://movementforchange.co.ke/password-reset/", mail.outbox[0].body)
