@@ -68,7 +68,15 @@ COMRADES_ROLES = [
     "Class / Department Ambassadors",
 ]
 
-LEADERSHIP_PROFILES = [
+ACTIVE_LEADERSHIP_PROFILE_NAMES = {
+    "Kimani W. Brian",
+    "Joseph Masini",
+    "Rob Jilo",
+    "Jared Opiyo",
+    "Muchina Nyaga",
+}
+
+ALL_LEADERSHIP_PROFILES = [
     {
         "image": "images/national-chair-chief.jpeg",
         "name": "",
@@ -90,15 +98,49 @@ LEADERSHIP_PROFILES = [
         "role": "National Finance & Resource Mobilization",
     },
     {
-        "image": "images/Jared_opiyo_National_operations.jpeg",
+        "image": "images/jared-opiyo-national-operations.jpeg",
         "name": "Jared Opiyo",
         "role": "National Operations",
     },
     {
-        "image": "images/Muchina_nyaga_National_media_and_communication.jpeg",
+        "image": "images/muchina-nyaga-national-media-and-communication.jpeg",
         "name": "Muchina Nyaga",
-        "role": "National Media and Communication",
+        "role": "National Media & Communication",
     },
+    {
+        "image": "images/brian-gitonga-embu-county-patron.jpeg",
+        "name": "Brian Gitonga",
+        "role": "County Patron",
+    },
+    {
+        "image": "images/martin-kor-deputy-county-patron-samburu-county.jpeg",
+        "name": "Martin Kor",
+        "role": "County Patron",
+    },
+    {
+        "image": "images/john-waithaka-county-patron-nyeri.jpeg",
+        "name": "John Waithaka",
+        "role": "County Patron",
+    },
+    {
+        "image": "images/wanjeri-esther-stacy-nakuru-county-patron.jpeg",
+        "name": "Wanjeri Esther Stacy",
+        "role": "County Patron",
+    },
+    {
+        "image": "images/esther-muteri-kajiado-county-patron.jpeg",
+        "name": "Esther Muteri",
+        "role": "County Patron",
+    },
+    {
+        "image": "images/moses-mwero-county-patron-kwale-county.jpeg",
+        "name": "Moses Mwero",
+        "role": "County Patron",
+    },
+]
+
+LEADERSHIP_PROFILES = [
+    profile for profile in ALL_LEADERSHIP_PROFILES if profile["name"] in ACTIVE_LEADERSHIP_PROFILE_NAMES or not profile["name"]
 ]
 
 COUNTY_DIRECTORY_PATH = Path(settings.BASE_DIR) / "static" / "data" / "kenya-county-directory.json"
