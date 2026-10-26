@@ -23,7 +23,7 @@
           {% if user.is_authenticated %}<a href="{% url 'profile' %}">Profile</a>{% else %}<a href="{% url 'login' %}">Sign in</a>{% endif %}
         </nav>
         <div class="header-actions">
-          <a class="button button-small button-blue" href="{% url 'home' %}#involve">Join Now</a>
+          {% if not user.is_authenticated %}<a class="button button-small button-blue" href="{% url 'home' %}#involve">Join Now</a>{% endif %}
           <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu" aria-controls="primaryNav" aria-expanded="false">
             <span></span><span></span><span></span>
           </button>

@@ -523,6 +523,7 @@ class LoginTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Welcome back, signed-in-member")
         self.assertContains(response, reverse("logout"))
+        self.assertNotContains(response, "Join Now")
         self.assertNotContains(response, 'id="joinPanel"')
         self.assertNotContains(response, "Join the Movement for Peace")
 
