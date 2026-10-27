@@ -18,4 +18,9 @@ if [ -z "${DJANGO_SECRET_KEY:-}" ]; then
 fi
 
 python manage.py migrate --noinput
-exec python run_tornado.py
+python manage.py collectstatic --noinput
+
+exec gunicorn m4c.wsgi:application \
+  --bind "0.0.0.0:${PORT:-10000}" \
+  --workers 2 \
+  --timeout 60
