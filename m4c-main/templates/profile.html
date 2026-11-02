@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="{% static 'css/site.css' %}">
   </head>
   <body class="page-shell login-shell">
+    {% include "partials/contact_buttons.html" %}
     <main class="login-layout page-width">
       <section class="login-intro">
         <a class="brand login-brand" href="{% url 'home' %}">

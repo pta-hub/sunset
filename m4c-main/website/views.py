@@ -126,8 +126,8 @@ ACTIVE_LEADERSHIP_PROFILE_NAMES = {
 
 ALL_LEADERSHIP_PROFILES = [
     {
-        "image": "images/national-chair-chief.jpeg",
-        "name": "",
+        "image": "images/boaz-nyambune-national-chair.jpeg",
+        "name": "Boaz Nyambune",
         "role": "National Chair",
     },
     {
