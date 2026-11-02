@@ -17,17 +17,8 @@ python manage.py runserver 0.0.0.0:8000
 
 The default local database is SQLite. The homepage, leadership, Comrades, and
 county directory pages are available immediately; the interactive map uses
-the bundled county and ward GeoJSON data.
-
-To serve through Tornado instead, configure a secret and start the app:
-
-```sh
-export DJANGO_SECRET_KEY="$(python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')"
-python run_tornado.py
-```
-
-Tornado listens on `0.0.0.0:8000` by default. Set `HOST` or `PORT` to change
-the bind address. `sh start.sh` applies migrations and launches Tornado. For a
+the bundled county and ward GeoJSON data. `sh start.sh` collects static files,
+applies migrations, and launches the WSGI application with Gunicorn. For a
 local start without a configured key, set `DJANGO_DEBUG=true`; the script then
 stores a generated key in the ignored `.django_secret_key` file.
 

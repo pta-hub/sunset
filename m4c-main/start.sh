@@ -19,4 +19,7 @@ fi
 
 python manage.py collectstatic --noinput
 python manage.py migrate --noinput
-exec python run_tornado.py
+exec gunicorn m4c.wsgi:application \
+  --bind "0.0.0.0:${PORT:-10000}" \
+  --workers 2 \
+  --timeout 60

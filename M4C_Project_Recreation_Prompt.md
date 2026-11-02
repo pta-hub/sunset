@@ -11,7 +11,7 @@ The site is primarily English-language and uses **Africa/Nairobi** as its time z
 ## 2. Technology and architecture
 
 - Backend: Python and Django (requirements allow Django `>=5.2,<7.0`).
-- Serving: Django WSGI application, optionally served through Tornado (`tornado>=6.4,<7.0`) by `run_tornado.py`; Django development server is also supported.
+- Serving: Django WSGI application served by Gunicorn in production; Django's development server is supported locally.
 - Database: SQLite for local development by default; PostgreSQL when `DATABASE_URL` is configured, using `dj-database-url` and `psycopg[binary]`.
 - Static assets: Django staticfiles plus WhiteNoise middleware.
 - Frontend: Django server-rendered templates, semantic HTML, custom CSS, and vanilla JavaScript. Do not replace it with an unrelated frontend framework unless explicitly asked.
@@ -174,10 +174,10 @@ Use and preserve the bundled assets where relevant:
 - Configure `STATIC_URL=/static/`, `STATIC_ROOT=BASE_DIR / "staticfiles"`, and `STATICFILES_DIRS=[BASE_DIR / "static"]`; use WhiteNoise for production static serving.
 - Read `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, and `DATABASE_URL` from environment. Fail safely if production has no secret key; never rely on a development-only key in production. Keep `.env`, database, generated secret key, and credential files out of version control.
 - Trusted HTTPS origins include the official M4C domains; when deployed behind Render or GitHub Codespaces forwarding, honor the forwarded HTTPS scheme and configure the matching trusted origin. Do not broadly disable CSRF.
-- `start.sh` should ensure a secret key exists (prefer hosting environment; if generated locally, store it in a private ignored file), set production debug default to false, run `python manage.py migrate --noinput`, then exec `python run_tornado.py`.
-- `Procfile` delegates to `sh start.sh`. `run_tornado.py` binds to `0.0.0.0` and defaults to port 8000, allowing `HOST` and `PORT` overrides.
+- `start.sh` should ensure a secret key exists (prefer hosting environment; if generated locally, store it in a private ignored file), set production debug default to false, collect static files, run `python manage.py migrate --noinput`, then exec `gunicorn m4c.wsgi:application` bound to `0.0.0.0:${PORT:-10000}`.
+- `Procfile` delegates to `sh start.sh`.
 - `docker-compose.base44.yml` provides a local Python 3.12 slim container, mounts the repository at `/app`, maps host port 3000 to container port 8000, installs requirements, migrates, and runs Django's dev server with auto-reload.
-- `README.md` should document virtualenv setup, install, migrations, dev server, Tornado server, database environment, production SMTP setup for password reset, and deployment caveats.
+- `README.md` should document virtualenv setup, install, migrations, dev server, Gunicorn production serving, database environment, production SMTP setup for password reset, and deployment caveats.
 
 ## 11. Tests and acceptance criteria
 
