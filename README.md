@@ -23,6 +23,7 @@ Configure the Render web service with:
 - Root directory: `m4c-main`
 - Build command: `pip install -r requirements.txt`
 - Start command: `sh start.sh`
+- `start.sh` collects static files, applies migrations, and serves `m4c.wsgi:application` with Gunicorn.
 - Environment: `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, and a persistent PostgreSQL `DATABASE_URL`
 - Deploy branch: `freeze-development-requirements` or the branch configured for the service
 
