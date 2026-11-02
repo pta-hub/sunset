@@ -71,21 +71,12 @@
 
       <section class="structure-section">
         <div class="section-heading">
-          <p class="eyebrow">Regional engagement</p>
-          <h2>Regional Leadership <span>Roles and structure</span></h2>
-        </div>
-        <ol class="role-list">
-          {% for role in regional_leadership %}
-            <li><span>{{ forloop.counter }}</span>{{ role }}</li>
-          {% endfor %}
-        </ol>
-        <div class="section-subheading" style="margin-top: 18px; margin-bottom: 14px;">
-          <p class="eyebrow">Regional leaders</p>
-          <h3>Featured regional patrons</h3>
+          <p class="eyebrow">Regional positions</p>
+          <h2>Regional Leadership <span>Seven positions with assigned leaders</span></h2>
         </div>
         <div class="leader-profile-grid">
           {% for profile in regional_leadership_profiles %}
-            <article class="leader-profile">
+            <article class="leader-profile regional-leader-profile">
               <img class="leader-profile-photo" src="{% static profile.image %}" alt="{{ profile.name }}" loading="lazy">
               <div class="leader-profile-copy">
                 <h3>{{ profile.name }}</h3>

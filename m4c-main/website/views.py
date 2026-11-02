@@ -47,13 +47,6 @@ NATIONAL_LEADERSHIP = [
     "Special Programmes / Stakeholder Relations",
 ]
 
-REGIONAL_LEADERSHIP = [
-    "Patron", "Deputy Patron", "Secretary", "Mobilization / Organizing",
-    "Communications / Digital", "Youth Groups Lead", "Women Groups Lead",
-    "Finance / Resources", "Research / Data", "Discipline / Ethics",
-    "Special Programmes / Stakeholder Relations",
-]
-
 REGIONAL_LEADERSHIP_PROFILES = [
     {
         "image": "images/alice-chumba-nairobi-region-patron.jpeg",
@@ -90,16 +83,6 @@ REGIONAL_LEADERSHIP_PROFILES = [
         "name": "Lucy Karambu",
         "role": "Eastern Region Patron",
     },
-    {
-        "image": "images/national-patron.jpeg",
-        "name": "Regional Patron",
-        "role": "Rift Valley Region Patron",
-    },
-    {
-        "image": "images/national-patron.jpeg",
-        "name": "Regional Patron",
-        "role": "North Eastern Region Patron",
-    },
 ]
 
 COUNTY_LEADERSHIP = [
@@ -117,6 +100,7 @@ COMRADES_ROLES = [
 ]
 
 ACTIVE_LEADERSHIP_PROFILE_NAMES = {
+    "Boaz Nyambune",
     "Kimani W. Brian",
     "Joseph Masini",
     "Rob Jilo",
@@ -226,7 +210,6 @@ def leadership(request):
     return render(request, "leadership.html", {
         "leadership_profiles": LEADERSHIP_PROFILES,
         "national_leadership": NATIONAL_LEADERSHIP,
-        "regional_leadership": REGIONAL_LEADERSHIP,
         "regional_leadership_profiles": REGIONAL_LEADERSHIP_PROFILES,
         "county_leadership": COUNTY_LEADERSHIP,
     })

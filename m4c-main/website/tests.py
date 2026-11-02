@@ -77,26 +77,18 @@ class PublicPageTests(SimpleTestCase):
         for name in (
             "Alice Chumba",
             "Augustus Lowoi Lorot",
+            "Deniss Dubi",
             "Elizabeth Situma",
             "Joan Omil",
             "Lucy Karambu",
             "Kezziah Muihaki",
         ):
             self.assertContains(response, name)
-        for region in (
-            "Nairobi Region",
-            "Coast Region",
-            "Eastern Region",
-            "Western Region",
-            "Nyanza Region",
-            "Central Region",
-            "North Western Region",
-            "Rift Valley Region",
-            "North Eastern Region",
-        ):
-            self.assertContains(response, region)
+        self.assertEqual(len(REGIONAL_LEADERSHIP_PROFILES), 7)
+        self.assertEqual(response.content.decode().count('class="leader-profile regional-leader-profile"'), 7)
         for profile in REGIONAL_LEADERSHIP_PROFILES:
             with self.subTest(profile=profile["role"]):
+                self.assertContains(response, profile["role"])
                 self.assertIsNotNone(finders.find(profile["image"]))
 
     def test_county_and_ward_directory_integrity(self):
