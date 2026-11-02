@@ -3,12 +3,13 @@ import json
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.contrib.staticfiles import finders
 from django.core import mail
 from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
 from website.models import MemberProfile, VolunteerRegistration
-from website.views import COUNTY_PROFILES
+from website.views import COUNTY_PROFILES, REGIONAL_LEADERSHIP_PROFILES
 
 
 class PublicPageTests(SimpleTestCase):
@@ -87,6 +88,9 @@ class PublicPageTests(SimpleTestCase):
             "North Eastern Region",
         ):
             self.assertContains(response, region)
+        for profile in REGIONAL_LEADERSHIP_PROFILES:
+            with self.subTest(profile=profile["role"]):
+                self.assertIsNotNone(finders.find(profile["image"]))
 
     def test_county_and_ward_directory_integrity(self):
         self.assertEqual(len(COUNTY_PROFILES), 47)

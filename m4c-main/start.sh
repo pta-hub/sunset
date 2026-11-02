@@ -17,5 +17,6 @@ if [ -z "${DJANGO_SECRET_KEY:-}" ]; then
   export DJANGO_SECRET_KEY
 fi
 
+python manage.py collectstatic --noinput
 python manage.py migrate --noinput
 exec python run_tornado.py
