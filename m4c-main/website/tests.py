@@ -244,6 +244,13 @@ class VolunteerApiTests(TestCase):
             "Your form security token expired. Reload the page and try again.",
         )
 
+    def test_browser_csrf_failure_renders_custom_page(self):
+        client = Client(enforce_csrf_checks=True)
+        response = client.post(reverse("login"), {})
+
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "Request could not be verified", status_code=403)
+
 
 class MemberAccountTests(TestCase):
     password = "Robust-M4C-passphrase-9482!"

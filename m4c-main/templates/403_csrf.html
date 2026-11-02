@@ -1,0 +1,21 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Request could not be verified | Movement for Change</title>
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  </head>
+  <body class="page-shell">
+    <main class="page-main page-width section-pad">
+      <section class="page-hero">
+        <p class="eyebrow">Security check</p>
+        <h1>Request could not be verified</h1>
+        <p>Your security token may have expired. Reload the page and try your request again.</p>
+        {% if reason %}<p>{{ reason }}</p>{% endif %}
+        <a class="button button-blue" href="{% url 'home' %}">Return to home</a>
+      </section>
+    </main>
+  </body>
+</html>

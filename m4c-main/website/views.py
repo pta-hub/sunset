@@ -9,7 +9,6 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from django.views.csrf import csrf_failure as default_csrf_failure
 from django.views.decorators.http import require_POST
 
 from .forms import MemberCreationForm
@@ -277,7 +276,7 @@ def csrf_failure(request, reason=""):
             {"message": "Your form security token expired. Reload the page and try again."},
             status=403,
         )
-    return default_csrf_failure(request, reason=reason)
+    return render(request, "403_csrf.html", {"reason": reason}, status=403)
 
 
 @require_POST
