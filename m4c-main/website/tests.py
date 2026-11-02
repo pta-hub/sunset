@@ -72,8 +72,21 @@ class PublicPageTests(SimpleTestCase):
             "Elizabeth Situma",
             "Joan Omil",
             "Lucy Karambu",
+            "Kezziah Muihaki",
         ):
             self.assertContains(response, name)
+        for region in (
+            "Nairobi Region",
+            "Coast Region",
+            "Eastern Region",
+            "Western Region",
+            "Nyanza Region",
+            "Central Region",
+            "North Western Region",
+            "Rift Valley Region",
+            "North Eastern Region",
+        ):
+            self.assertContains(response, region)
 
     def test_county_and_ward_directory_integrity(self):
         self.assertEqual(len(COUNTY_PROFILES), 47)

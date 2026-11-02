@@ -61,6 +61,11 @@ REGIONAL_LEADERSHIP_PROFILES = [
         "role": "Nairobi Region Patron",
     },
     {
+        "image": "images/kezziah-muihaki-central-region-patron.jpeg",
+        "name": "Kezziah Muihaki",
+        "role": "Central Region Patron",
+    },
+    {
         "image": "images/augustus-lowoi-lorot-north-western-region-patron.jpeg",
         "name": "Augustus Lowoi Lorot",
         "role": "North Western Region Patron",
@@ -84,6 +89,16 @@ REGIONAL_LEADERSHIP_PROFILES = [
         "image": "images/lucy-karambu-eastern-region-patron.jpeg",
         "name": "Lucy Karambu",
         "role": "Eastern Region Patron",
+    },
+    {
+        "image": "images/national-patron.jpeg",
+        "name": "Regional Patron",
+        "role": "Rift Valley Region Patron",
+    },
+    {
+        "image": "images/national-patron.jpeg",
+        "name": "Regional Patron",
+        "role": "North Eastern Region Patron",
     },
 ]
 
