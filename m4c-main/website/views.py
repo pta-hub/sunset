@@ -54,6 +54,39 @@ REGIONAL_LEADERSHIP = [
     "Special Programmes / Stakeholder Relations",
 ]
 
+REGIONAL_LEADERSHIP_PROFILES = [
+    {
+        "image": "images/alice-chumba-nairobi-region-patron.jpeg",
+        "name": "Alice Chumba",
+        "role": "Nairobi Region Patron",
+    },
+    {
+        "image": "images/augustus-lowoi-lorot-north-western-region-patron.jpeg",
+        "name": "Augustus Lowoi Lorot",
+        "role": "North Western Region Patron",
+    },
+    {
+        "image": "images/deniss-dubi-coast-region-patron.jpeg",
+        "name": "Deniss Dubi",
+        "role": "Coast Region Patron",
+    },
+    {
+        "image": "images/elizabeth-situma-western-region-patron.jpeg",
+        "name": "Elizabeth Situma",
+        "role": "Western Region Patron",
+    },
+    {
+        "image": "images/joan-omil-nyanza-region-patron.jpeg",
+        "name": "Joan Omil",
+        "role": "Nyanza Region Patron",
+    },
+    {
+        "image": "images/lucy-karambu-eastern-region-patron.jpeg",
+        "name": "Lucy Karambu",
+        "role": "Eastern Region Patron",
+    },
+]
+
 COUNTY_LEADERSHIP = [
     "Patron", "Deputy Patron", "Secretary", "Mobilization / Organizing",
     "Communications / Digital", "Youth Groups Lead", "Women Groups Lead",
@@ -179,6 +212,7 @@ def leadership(request):
         "leadership_profiles": LEADERSHIP_PROFILES,
         "national_leadership": NATIONAL_LEADERSHIP,
         "regional_leadership": REGIONAL_LEADERSHIP,
+        "regional_leadership_profiles": REGIONAL_LEADERSHIP_PROFILES,
         "county_leadership": COUNTY_LEADERSHIP,
     })
 

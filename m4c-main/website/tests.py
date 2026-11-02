@@ -66,6 +66,14 @@ class PublicPageTests(SimpleTestCase):
             "Special Programmes / Stakeholder Relations",
         ):
             self.assertContains(response, role)
+        for name in (
+            "Alice Chumba",
+            "Augustus Lowoi Lorot",
+            "Elizabeth Situma",
+            "Joan Omil",
+            "Lucy Karambu",
+        ):
+            self.assertContains(response, name)
 
     def test_county_and_ward_directory_integrity(self):
         self.assertEqual(len(COUNTY_PROFILES), 47)

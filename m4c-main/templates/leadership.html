@@ -78,6 +78,17 @@
             <li><span>{{ forloop.counter }}</span>{{ role }}</li>
           {% endfor %}
         </ol>
+        <div class="leader-profile-grid">
+          {% for profile in regional_leadership_profiles %}
+            <article class="leader-profile">
+              <img class="leader-profile-photo" src="{% static profile.image %}" alt="{{ profile.name }}" loading="lazy">
+              <div class="leader-profile-copy">
+                <h3>{{ profile.name }}</h3>
+                <p>{{ profile.role }}</p>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
       </section>
 
       <section class="structure-section">
