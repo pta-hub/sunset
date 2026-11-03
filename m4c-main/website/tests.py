@@ -277,7 +277,7 @@ class MemberAccountTests(TestCase):
             "password2": self.password,
         }, HTTP_X_CSRFTOKEN=token, follow=True)
 
-        self.assertRedirects(response, reverse("home"))
+        self.assertRedirects(response, reverse("profile"))
         user = get_user_model().objects.get(username="new-m4c-member")
         self.assertEqual(client.session.get("_auth_user_id"), str(user.pk))
         self.assertTrue(user.check_password(self.password))
@@ -322,16 +322,51 @@ class MemberAccountTests(TestCase):
 
     def test_login_accepts_email_address_and_logout_works(self):
         user = self.make_user()
+        MemberProfile.objects.create(
+            user=user,
+            full_name="Login Member",
+            phone_number="+254712345679",
+            county="Nairobi",
+            interest="Youth Leader",
+        )
         response = self.client.post(reverse("login"), {
             "username": "MEMBER@example.com",
             "password": self.password,
         })
 
-        self.assertRedirects(response, reverse("home"))
+        self.assertRedirects(response, reverse("profile"))
         self.assertEqual(self.client.session.get("_auth_user_id"), str(user.pk))
         response = self.client.post(reverse("logout"))
         self.assertRedirects(response, reverse("home"))
         self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_staff_login_redirects_to_admin_and_valid_next_is_preserved(self):
+        staff_user = get_user_model().objects.create_user(
+            username="m4c-staff",
+            password=self.password,
+            is_staff=True,
+        )
+        response = self.client.post(reverse("login"), {
+            "username": staff_user.username,
+            "password": self.password,
+        })
+        self.assertRedirects(response, reverse("admin:index"))
+
+        self.client.logout()
+        member = self.make_user(username="redirect-member")
+        MemberProfile.objects.create(
+            user=member,
+            full_name="Redirect Member",
+            phone_number="+254712345678",
+            county="Nairobi",
+            interest="Youth Leader",
+        )
+        response = self.client.post(reverse("login"), {
+            "username": member.username,
+            "password": self.password,
+            "next": reverse("home"),
+        })
+        self.assertRedirects(response, reverse("home"))
 
     def test_admin_can_manage_member_and_volunteer_records(self):
         self.assertIn(MemberProfile, admin.site._registry)

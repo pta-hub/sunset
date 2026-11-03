@@ -47,8 +47,10 @@ do not disclose whether an account exists.
 ## Volunteer registrations and member accounts
 
 Member registration creates a Django account and signs the member in
-immediately; email and phone verification are not required. Members can sign
-in using their username or email, view `/profile/`, and reset passwords from
+immediately; email and phone verification are not required. After registration
+or sign-in, members with a profile are sent to `/profile/`, while staff accounts
+are sent to Django admin. A valid `next` destination takes precedence. Members
+can sign in using their username or email and reset passwords from
 `/password-reset/`.
 
 The CSRF-protected `POST /api/volunteers` endpoint accepts JSON using either

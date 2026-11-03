@@ -9,10 +9,11 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from .forms import MemberCreationForm
-from .models import VolunteerRegistration
+from .models import MemberProfile, VolunteerRegistration
 
 COUNTIES = [
     "Mombasa", "Kwale", "Kilifi", "Tana River", "Lamu", "Taita-Taveta", "Garissa", "Wajir", "Mandera", "Marsabit",
@@ -238,6 +239,20 @@ def county_detail(request, slug):
 class MemberLoginView(LoginView):
     template_name = "login.html"
 
+    def get_default_redirect_url(self):
+        return user_redirect_url(self.request.user)
+
+
+def user_redirect_url(user):
+    if user.is_staff or user.is_superuser:
+        return reverse("admin:index")
+    try:
+        user.member_profile
+    except MemberProfile.DoesNotExist:
+        return reverse("home")
+    return reverse("profile")
+
+
 def register(request):
     if request.user.is_authenticated:
         return redirect("home")
@@ -260,7 +275,7 @@ def register(request):
     if request.method == "POST" and form.is_valid():
         user = form.save()
         login(request, user)
-        return redirect("home")
+        return redirect(user_redirect_url(user))
 
     return render(request, "register.html", {"form": form})
 
