@@ -47,6 +47,12 @@ NATIONAL_LEADERSHIP = [
     "Special Programmes / Stakeholder Relations",
 ]
 
+NATIONAL_PATRON = {
+    "title": "NATIONAL PATRON",
+    "status": "Appointment Pending",
+    "description": "The office is reserved for a distinguished national figure who will serve as a patron of the Movement.",
+}
+
 REGIONAL_LEADERSHIP_PROFILES = [
     {
         "image": "images/alice-chumba-nairobi-region-patron.jpeg",
@@ -214,6 +220,7 @@ def home(request):
 def leadership(request):
     return render(request, "leadership.html", {
         "leadership_profiles": LEADERSHIP_PROFILES,
+        "national_patron": NATIONAL_PATRON,
         "national_leadership": NATIONAL_LEADERSHIP,
         "regional_leadership_profiles": REGIONAL_LEADERSHIP_PROFILES,
         "county_leadership": COUNTY_LEADERSHIP,

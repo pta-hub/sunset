@@ -40,6 +40,20 @@
       </section>
 
       <section class="structure-section">
+        <div class="national-patron-card" aria-live="polite">
+          <div class="national-patron-avatar" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="img" aria-label="Appointment pending icon">
+              <circle cx="32" cy="24" r="12" fill="none" stroke="currentColor" stroke-width="3.25"/>
+              <path d="M18 50c2.3-7.5 9.2-11.5 14-11.5S43.7 42.5 46 50" fill="none" stroke="currentColor" stroke-width="3.25" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h2>{{ national_patron.title }}</h2>
+          <div class="national-patron-badge">{{ national_patron.status }}</div>
+          <p>{{ national_patron.description }}</p>
+        </div>
+      </section>
+
+      <section class="structure-section">
         <div class="section-heading section-heading-left">
           <p class="eyebrow">Leadership profiles</p>
           <h2>Meet the M4C leaders</h2>

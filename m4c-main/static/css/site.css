@@ -240,6 +240,12 @@ h1 em, .section-heading em { color: var(--blue); font-style: normal; }
   color: var(--ink);
   font-size: clamp(20px, 2vw, 28px);
 }
+.national-patron-card { max-width: 980px; margin: 0 auto 26px; padding: clamp(28px, 4vw, 56px) clamp(18px, 4vw, 42px) 30px; border: 1px solid #dfe8ef; background: rgba(245, 246, 247, 0.9); border-radius: 28px; text-align: center; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4); }
+.national-patron-avatar { width: clamp(154px, 18vw, 230px); height: clamp(154px, 18vw, 230px); margin: 0 auto 18px; display: grid; place-items: center; border-radius: 50%; background: #e2e5e8; color: #5d6770; }
+.national-patron-avatar svg { width: 54%; height: 54%; }
+.national-patron-card h2 { margin: 0 0 22px; font-size: clamp(2.4rem, 5vw, 5rem); letter-spacing: 0.02em; line-height: 1.02; }
+.national-patron-badge { display: inline-flex; align-items: center; justify-content: center; min-height: 64px; padding: 0 28px; border-radius: 999px; background: #efc9b5; color: #4a3e3f; font-size: clamp(1.2rem, 2.8vw, 2.8rem); font-weight: 700; box-shadow: inset 0 0 0 1px rgba(120, 76, 62, 0.12); }
+.national-patron-card p { max-width: 780px; margin: 26px auto 0; color: #495b6f; font-size: clamp(1.25rem, 2.6vw, 3rem); font-weight: 400; line-height: 1.32; }
 .leader-profile-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .leader-profile { min-width: 0; overflow: hidden; border: 1px solid var(--line); background: var(--white); border-radius: 12px; box-shadow: 0 10px 24px rgb(11 43 80 / 06%); }
 .leader-profile-photo { width: 100%; height: 310px; object-fit: cover; object-position: center 28%; background: #e6ecea; }
