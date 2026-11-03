@@ -99,6 +99,11 @@ LEADERSHIP_PROFILES = [
         "name": "Muchina Nyaga",
         "role": "National Media and Communication",
     },
+    {
+        "image": "images/alice-chumba-nairobi-region-patron.jpeg",
+        "name": "Alice Chumba",
+        "role": "Nairobi Regional Patron",
+    },
 ]
 
 COUNTY_DIRECTORY_PATH = Path(settings.BASE_DIR) / "static" / "data" / "kenya-county-directory.json"

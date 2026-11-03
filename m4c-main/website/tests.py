@@ -59,8 +59,11 @@ class PublicPageTests(SimpleTestCase):
             "Rob Jilo",
             "Jared Opiyo",
             "Muchina Nyaga",
+            "Alice Chumba",
         ):
             self.assertContains(response, name)
+        self.assertContains(response, "Nairobi Regional Patron")
+        self.assertContains(response, "images/alice-chumba-nairobi-region-patron.jpeg")
         for inactive_name in (
             "Brian Gitonga", "Martin Kor", "John Waithaka",
             "Wanjeri Esther Stacy", "Esther Muteri", "Moses Mwero",
