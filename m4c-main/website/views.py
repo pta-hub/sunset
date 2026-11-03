@@ -220,9 +220,9 @@ def home(request):
 def leadership(request):
     return render(request, "leadership.html", {
         "leadership_profiles": LEADERSHIP_PROFILES,
+        "regional_leadership": REGIONAL_LEADERSHIP_PROFILES,
         "national_patron": NATIONAL_PATRON,
         "national_leadership": NATIONAL_LEADERSHIP,
-        "regional_leadership_profiles": REGIONAL_LEADERSHIP_PROFILES,
         "county_leadership": COUNTY_LEADERSHIP,
     })
 

@@ -36,7 +36,7 @@
       <section class="page-hero">
         <p class="eyebrow">Leadership</p>
         <h1>Organized for <em>peace, unity and service</em></h1>
-        <p>The National Leadership, Regional Leadership and County Leadership structures form a connected movement across Kenya.</p>
+        <p>The National Leadership and County Leadership structures form a connected movement across Kenya.</p>
       </section>
 
       <section class="structure-section">
@@ -72,6 +72,24 @@
       </section>
 
       <section class="structure-section">
+        <div class="section-heading section-heading-left">
+          <p class="eyebrow">Regional leadership</p>
+          <h2>Regional Leadership</h2>
+        </div>
+        <div class="leader-profile-grid">
+          {% for profile in regional_leadership %}
+            <article class="leader-profile">
+              <img class="leader-profile-photo" src="{% static profile.image %}" alt="{{ profile.name|default:profile.role }}" loading="lazy">
+              <div class="leader-profile-copy">
+                {% if profile.name %}<h3>{{ profile.name }}</h3>{% endif %}
+                <p>{{ profile.role }}</p>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="structure-section">
         <div class="section-heading">
           <p class="eyebrow">National structure</p>
           <h2>National Leadership <span>Roles and structure</span></h2>
@@ -81,24 +99,6 @@
             <li><span>{{ forloop.counter }}</span>{{ role }}</li>
           {% endfor %}
         </ol>
-      </section>
-
-      <section class="structure-section">
-        <div class="section-heading">
-          <p class="eyebrow">Regional positions</p>
-          <h2>Regional Leadership <span>Eight positions with assigned leaders</span></h2>
-        </div>
-        <div class="leader-profile-grid">
-          {% for profile in regional_leadership_profiles %}
-            <article class="leader-profile regional-leader-profile">
-              <img class="leader-profile-photo" src="{% static profile.image %}" alt="{{ profile.name }}" loading="lazy">
-              <div class="leader-profile-copy">
-                <h3>{{ profile.name }}</h3>
-                <p>{{ profile.role }}</p>
-              </div>
-            </article>
-          {% endfor %}
-        </div>
       </section>
 
       <section class="structure-section">

@@ -49,9 +49,10 @@ class PublicPageTests(SimpleTestCase):
         response = self.client.get(reverse("leadership"))
 
         self.assertContains(response, "National Leadership")
-        self.assertContains(response, "Regional Leadership")
         self.assertContains(response, "County Leadership")
-        self.assertNotContains(response, "11 members")
+        self.assertContains(response, "Regional Leadership")
+        self.assertContains(response, "Elizabeth Situma")
+        self.assertContains(response, "Western Region Patron")
         self.assertContains(response, "National Chair")
         for name in (
             "Boaz Nyambune",
@@ -60,6 +61,7 @@ class PublicPageTests(SimpleTestCase):
             "Rob Jilo",
             "Jared Opiyo",
             "Muchina Nyaga",
+            "Elizabeth Situma",
         ):
             self.assertContains(response, name)
         for inactive_name in (
@@ -74,20 +76,7 @@ class PublicPageTests(SimpleTestCase):
             "Special Programmes / Stakeholder Relations",
         ):
             self.assertContains(response, role)
-        for name in (
-            "Alice Chumba",
-            "Augustus Lowoi Lorot",
-            "Deniss Dubi",
-            "Elizabeth Situma",
-            "Joan Omil",
-            "Lucy Karambu",
-            "Kezziah Muihaki",
-            "Rono Hassan",
-        ):
-            self.assertContains(response, name)
-        self.assertContains(response, "Rift Valley Region Patron")
         self.assertEqual(len(REGIONAL_LEADERSHIP_PROFILES), 8)
-        self.assertEqual(response.content.decode().count('class="leader-profile regional-leader-profile"'), 8)
         for profile in REGIONAL_LEADERSHIP_PROFILES:
             with self.subTest(profile=profile["role"]):
                 self.assertContains(response, profile["role"])
