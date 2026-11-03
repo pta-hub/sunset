@@ -82,10 +82,12 @@ class PublicPageTests(SimpleTestCase):
             "Joan Omil",
             "Lucy Karambu",
             "Kezziah Muihaki",
+            "Rono Hassan",
         ):
             self.assertContains(response, name)
-        self.assertEqual(len(REGIONAL_LEADERSHIP_PROFILES), 7)
-        self.assertEqual(response.content.decode().count('class="leader-profile regional-leader-profile"'), 7)
+        self.assertContains(response, "Rift Valley Region Patron")
+        self.assertEqual(len(REGIONAL_LEADERSHIP_PROFILES), 8)
+        self.assertEqual(response.content.decode().count('class="leader-profile regional-leader-profile"'), 8)
         for profile in REGIONAL_LEADERSHIP_PROFILES:
             with self.subTest(profile=profile["role"]):
                 self.assertContains(response, profile["role"])

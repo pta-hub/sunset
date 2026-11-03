@@ -83,6 +83,11 @@ REGIONAL_LEADERSHIP_PROFILES = [
         "name": "Lucy Karambu",
         "role": "Eastern Region Patron",
     },
+    {
+        "image": "images/rono-hassan-rift-valley-region-patron.jpeg",
+        "name": "Rono Hassan",
+        "role": "Rift Valley Region Patron",
+    },
 ]
 
 COUNTY_LEADERSHIP = [
