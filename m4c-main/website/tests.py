@@ -3,12 +3,13 @@ import json
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.contrib.staticfiles import finders
 from django.core import mail
 from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
 from website.models import MemberProfile, VolunteerRegistration
-from website.views import COUNTY_PROFILES
+from website.views import COUNTY_PROFILES, REGIONAL_LEADERSHIP_PROFILES
 
 
 class PublicPageTests(SimpleTestCase):
@@ -18,6 +19,8 @@ class PublicPageTests(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Promoting Peace, Unity")
         self.assertContains(response, "Constructive Dialogue")
+        self.assertContains(response, 'href="#involve">Join M4C')
+        self.assertContains(response, f'href="{reverse("leadership")}">Leadership</a>')
         self.assertContains(response, "m4c-logo.jpeg")
         self.assertContains(response, "hero-background-logo")
         self.assertContains(response, 'name="twitter:card" content="summary_large_image"')
@@ -48,9 +51,11 @@ class PublicPageTests(SimpleTestCase):
         response = self.client.get(reverse("leadership"))
 
         self.assertContains(response, "National Leadership")
-        self.assertContains(response, "Regional Leadership")
         self.assertContains(response, "County Leadership")
-        self.assertNotContains(response, "11 members")
+        self.assertContains(response, "Regional Leadership")
+        self.assertContains(response, "8 regional leaders")
+        self.assertContains(response, "Elizabeth Situma")
+        self.assertContains(response, "Western Region Patron")
         self.assertContains(response, "National Chair")
         for name in (
             "Boaz Nyambune",
@@ -60,9 +65,10 @@ class PublicPageTests(SimpleTestCase):
             "Jared Opiyo",
             "Muchina Nyaga",
             "Alice Chumba",
+            "Elizabeth Situma",
         ):
             self.assertContains(response, name)
-        self.assertContains(response, "Nairobi Regional Patron")
+        self.assertContains(response, "Nairobi Region Patron")
         self.assertContains(response, "images/alice-chumba-nairobi-region-patron.jpeg")
         for inactive_name in (
             "Brian Gitonga", "Martin Kor", "John Waithaka",
@@ -76,6 +82,11 @@ class PublicPageTests(SimpleTestCase):
             "Special Programmes / Stakeholder Relations",
         ):
             self.assertContains(response, role)
+        self.assertEqual(len(REGIONAL_LEADERSHIP_PROFILES), 8)
+        for profile in REGIONAL_LEADERSHIP_PROFILES:
+            with self.subTest(profile=profile["role"]):
+                self.assertContains(response, profile["role"])
+                self.assertIsNotNone(finders.find(profile["image"]))
 
     def test_county_and_ward_directory_integrity(self):
         self.assertEqual(len(COUNTY_PROFILES), 47)
@@ -230,6 +241,13 @@ class VolunteerApiTests(TestCase):
             "Your form security token expired. Reload the page and try again.",
         )
 
+    def test_browser_csrf_failure_renders_custom_page(self):
+        client = Client(enforce_csrf_checks=True)
+        response = client.post(reverse("login"), {})
+
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "Request could not be verified", status_code=403)
+
 
 class MemberAccountTests(TestCase):
     password = "Robust-M4C-passphrase-9482!"
@@ -256,7 +274,7 @@ class MemberAccountTests(TestCase):
             "password2": self.password,
         }, HTTP_X_CSRFTOKEN=token, follow=True)
 
-        self.assertRedirects(response, reverse("home"))
+        self.assertRedirects(response, reverse("profile"))
         user = get_user_model().objects.get(username="new-m4c-member")
         self.assertEqual(client.session.get("_auth_user_id"), str(user.pk))
         self.assertTrue(user.check_password(self.password))
@@ -301,16 +319,51 @@ class MemberAccountTests(TestCase):
 
     def test_login_accepts_email_address_and_logout_works(self):
         user = self.make_user()
+        MemberProfile.objects.create(
+            user=user,
+            full_name="Login Member",
+            phone_number="+254712345679",
+            county="Nairobi",
+            interest="Youth Leader",
+        )
         response = self.client.post(reverse("login"), {
             "username": "MEMBER@example.com",
             "password": self.password,
         })
 
-        self.assertRedirects(response, reverse("home"))
+        self.assertRedirects(response, reverse("profile"))
         self.assertEqual(self.client.session.get("_auth_user_id"), str(user.pk))
         response = self.client.post(reverse("logout"))
         self.assertRedirects(response, reverse("home"))
         self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_staff_login_redirects_to_admin_and_valid_next_is_preserved(self):
+        staff_user = get_user_model().objects.create_user(
+            username="m4c-staff",
+            password=self.password,
+            is_staff=True,
+        )
+        response = self.client.post(reverse("login"), {
+            "username": staff_user.username,
+            "password": self.password,
+        })
+        self.assertRedirects(response, reverse("admin:index"))
+
+        self.client.logout()
+        member = self.make_user(username="redirect-member")
+        MemberProfile.objects.create(
+            user=member,
+            full_name="Redirect Member",
+            phone_number="+254712345678",
+            county="Nairobi",
+            interest="Youth Leader",
+        )
+        response = self.client.post(reverse("login"), {
+            "username": member.username,
+            "password": self.password,
+            "next": reverse("home"),
+        })
+        self.assertRedirects(response, reverse("home"))
 
     def test_admin_can_manage_member_and_volunteer_records(self):
         self.assertIn(MemberProfile, admin.site._registry)

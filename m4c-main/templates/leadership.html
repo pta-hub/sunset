@@ -36,7 +36,21 @@
       <section class="page-hero">
         <p class="eyebrow">Leadership</p>
         <h1>Organized for <em>peace, unity and service</em></h1>
-        <p>The National Leadership, Regional Leadership and County Leadership structures form a connected movement across Kenya.</p>
+        <p>The National Leadership and County Leadership structures form a connected movement across Kenya.</p>
+      </section>
+
+      <section class="structure-section">
+        <div class="national-patron-card" aria-live="polite">
+          <div class="national-patron-avatar" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="img" aria-label="Appointment pending icon">
+              <circle cx="32" cy="24" r="12" fill="none" stroke="currentColor" stroke-width="3.25"/>
+              <path d="M18 50c2.3-7.5 9.2-11.5 14-11.5S43.7 42.5 46 50" fill="none" stroke="currentColor" stroke-width="3.25" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h2>{{ national_patron.title }}</h2>
+          <div class="national-patron-badge">{{ national_patron.status }}</div>
+          <p>{{ national_patron.description }}</p>
+        </div>
       </section>
 
       <section class="structure-section">
@@ -58,24 +72,30 @@
       </section>
 
       <section class="structure-section">
+        <div class="section-heading section-heading-left">
+          <p class="eyebrow">Regional leadership</p>
+          <h2>Regional Leadership <span>{{ regional_leadership|length }} regional leaders</span></h2>
+        </div>
+        <div class="leader-profile-grid">
+          {% for profile in regional_leadership %}
+            <article class="leader-profile">
+              <img class="leader-profile-photo" src="{% static profile.image %}" alt="{{ profile.name|default:profile.role }}" loading="lazy">
+              <div class="leader-profile-copy">
+                {% if profile.name %}<h3>{{ profile.name }}</h3>{% endif %}
+                <p>{{ profile.role }}</p>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="structure-section">
         <div class="section-heading">
           <p class="eyebrow">National structure</p>
           <h2>National Leadership <span>Roles and structure</span></h2>
         </div>
         <ol class="role-list">
           {% for role in national_leadership %}
-            <li><span>{{ forloop.counter }}</span>{{ role }}</li>
-          {% endfor %}
-        </ol>
-      </section>
-
-      <section class="structure-section">
-        <div class="section-heading">
-          <p class="eyebrow">Regional engagement</p>
-          <h2>Regional Leadership <span>Roles and structure</span></h2>
-        </div>
-        <ol class="role-list">
-          {% for role in regional_leadership %}
             <li><span>{{ forloop.counter }}</span>{{ role }}</li>
           {% endfor %}
         </ol>

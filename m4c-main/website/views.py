@@ -9,11 +9,11 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from django.views.csrf import csrf_failure as default_csrf_failure
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from .forms import MemberCreationForm
-from .models import VolunteerRegistration
+from .models import MemberProfile, VolunteerRegistration
 
 COUNTIES = [
     "Mombasa", "Kwale", "Kilifi", "Tana River", "Lamu", "Taita-Taveta", "Garissa", "Wajir", "Mandera", "Marsabit",
@@ -47,11 +47,53 @@ NATIONAL_LEADERSHIP = [
     "Special Programmes / Stakeholder Relations",
 ]
 
-REGIONAL_LEADERSHIP = [
-    "Patron", "Deputy Patron", "Secretary", "Mobilization / Organizing",
-    "Communications / Digital", "Youth Groups Lead", "Women Groups Lead",
-    "Finance / Resources", "Research / Data", "Discipline / Ethics",
-    "Special Programmes / Stakeholder Relations",
+NATIONAL_PATRON = {
+    "title": "NATIONAL PATRON",
+    "status": "Appointment Pending",
+    "description": "The office is reserved for a distinguished national figure who will serve as a patron of the Movement.",
+}
+
+REGIONAL_LEADERSHIP_PROFILES = [
+    {
+        "image": "images/alice-chumba-nairobi-region-patron.jpeg",
+        "name": "Alice Chumba",
+        "role": "Nairobi Region Patron",
+    },
+    {
+        "image": "images/kezziah-muihaki-central-region-patron.jpeg",
+        "name": "Kezziah Muihaki",
+        "role": "Central Region Patron",
+    },
+    {
+        "image": "images/augustus-lowoi-lorot-north-western-region-patron.jpeg",
+        "name": "Augustus Lowoi Lorot",
+        "role": "North Western Region Patron",
+    },
+    {
+        "image": "images/deniss-dubi-coast-region-patron.jpeg",
+        "name": "Deniss Dubi",
+        "role": "Coast Region Patron",
+    },
+    {
+        "image": "images/elizabeth-situma-western-region-patron.jpeg",
+        "name": "Elizabeth Situma",
+        "role": "Western Region Patron",
+    },
+    {
+        "image": "images/joan-omil-nyanza-region-patron.jpeg",
+        "name": "Joan Omil",
+        "role": "Nyanza Region Patron",
+    },
+    {
+        "image": "images/lucy-karambu-eastern-region-patron.jpeg",
+        "name": "Lucy Karambu",
+        "role": "Eastern Region Patron",
+    },
+    {
+        "image": "images/rono-hassan-rift-valley-region-patron.jpeg",
+        "name": "Rono Hassan",
+        "role": "Rift Valley Region Patron",
+    },
 ]
 
 COUNTY_LEADERSHIP = [
@@ -68,7 +110,16 @@ COMRADES_ROLES = [
     "Class / Department Ambassadors",
 ]
 
-LEADERSHIP_PROFILES = [
+ACTIVE_LEADERSHIP_PROFILE_NAMES = {
+    "Boaz Nyambune",
+    "Kimani W. Brian",
+    "Joseph Masini",
+    "Rob Jilo",
+    "Jared Opiyo",
+    "Muchina Nyaga",
+}
+
+ALL_LEADERSHIP_PROFILES = [
     {
         "image": "images/boaz-nyambune-national-chair.jpeg",
         "name": "Boaz Nyambune",
@@ -90,20 +141,49 @@ LEADERSHIP_PROFILES = [
         "role": "National Finance & Resource Mobilization",
     },
     {
-        "image": "images/Jared_opiyo_National_operations.jpeg",
+        "image": "images/jared-opiyo-national-operations.jpeg",
         "name": "Jared Opiyo",
         "role": "National Operations",
     },
     {
-        "image": "images/Muchina_nyaga_National_media_and_communication.jpeg",
+        "image": "images/muchina-nyaga-national-media-and-communication.jpeg",
         "name": "Muchina Nyaga",
-        "role": "National Media and Communication",
+        "role": "National Media & Communication",
     },
     {
-        "image": "images/alice-chumba-nairobi-region-patron.jpeg",
-        "name": "Alice Chumba",
-        "role": "Nairobi Regional Patron",
+        "image": "images/brian-gitonga-embu-county-patron.jpeg",
+        "name": "Brian Gitonga",
+        "role": "County Patron",
     },
+    {
+        "image": "images/martin-kor-deputy-county-patron-samburu-county.jpeg",
+        "name": "Martin Kor",
+        "role": "County Patron",
+    },
+    {
+        "image": "images/john-waithaka-county-patron-nyeri.jpeg",
+        "name": "John Waithaka",
+        "role": "County Patron",
+    },
+    {
+        "image": "images/wanjeri-esther-stacy-nakuru-county-patron.jpeg",
+        "name": "Wanjeri Esther Stacy",
+        "role": "County Patron",
+    },
+    {
+        "image": "images/esther-muteri-kajiado-county-patron.jpeg",
+        "name": "Esther Muteri",
+        "role": "County Patron",
+    },
+    {
+        "image": "images/moses-mwero-county-patron-kwale-county.jpeg",
+        "name": "Moses Mwero",
+        "role": "County Patron",
+    },
+]
+
+LEADERSHIP_PROFILES = [
+    profile for profile in ALL_LEADERSHIP_PROFILES if profile["name"] in ACTIVE_LEADERSHIP_PROFILE_NAMES or not profile["name"]
 ]
 
 COUNTY_DIRECTORY_PATH = Path(settings.BASE_DIR) / "static" / "data" / "kenya-county-directory.json"
@@ -140,8 +220,9 @@ def home(request):
 def leadership(request):
     return render(request, "leadership.html", {
         "leadership_profiles": LEADERSHIP_PROFILES,
+        "regional_leadership": REGIONAL_LEADERSHIP_PROFILES,
+        "national_patron": NATIONAL_PATRON,
         "national_leadership": NATIONAL_LEADERSHIP,
-        "regional_leadership": REGIONAL_LEADERSHIP,
         "county_leadership": COUNTY_LEADERSHIP,
     })
 
@@ -170,6 +251,19 @@ def county_detail(request, slug):
 class MemberLoginView(LoginView):
     template_name = "login.html"
 
+    def get_default_redirect_url(self):
+        return user_redirect_url(self.request.user)
+
+
+def user_redirect_url(user):
+    if user.is_staff or user.is_superuser:
+        return reverse("admin:index")
+    try:
+        user.member_profile
+    except MemberProfile.DoesNotExist:
+        return reverse("home")
+    return reverse("profile")
+
 
 def register(request):
     if request.user.is_authenticated:
@@ -193,7 +287,7 @@ def register(request):
     if request.method == "POST" and form.is_valid():
         user = form.save()
         login(request, user)
-        return redirect("home")
+        return redirect(user_redirect_url(user))
 
     return render(request, "register.html", {"form": form})
 
@@ -209,7 +303,7 @@ def csrf_failure(request, reason=""):
             {"message": "Your form security token expired. Reload the page and try again."},
             status=403,
         )
-    return default_csrf_failure(request, reason=reason)
+    return render(request, "403_csrf.html", {"reason": reason}, status=403)
 
 
 @require_POST
