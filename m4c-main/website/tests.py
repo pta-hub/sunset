@@ -369,6 +369,42 @@ class MemberAccountTests(TestCase):
         self.assertIn(MemberProfile, admin.site._registry)
         self.assertIn(VolunteerRegistration, admin.site._registry)
 
+    def test_member_dashboard_is_not_available_to_public_or_members(self):
+        url = reverse("member-dashboard")
+        self.assertEqual(self.client.get(url).status_code, 302)
+
+        member = self.make_user(username="dashboard-member")
+        MemberProfile.objects.create(
+            user=member,
+            phone_number="+254712345681",
+            county="Nairobi",
+        )
+        self.client.force_login(member)
+        self.assertEqual(self.client.get(url).status_code, 302)
+
+    def test_staff_member_dashboard_displays_member_records(self):
+        member = self.make_user(username="dashboard-listed-member")
+        profile = MemberProfile.objects.create(
+            user=member,
+            full_name="Dashboard Member",
+            phone_number="+254712345682",
+            county="Nairobi",
+        )
+        staff_user = self.make_user(username="dashboard-staff")
+        staff_user.is_staff = True
+        staff_user.save(update_fields=("is_staff",))
+        self.client.force_login(staff_user)
+
+        response = self.client.get(reverse("member-dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Dashboard Member")
+        self.assertContains(response, "+254712345682")
+        self.assertContains(response, "Nairobi")
+        self.assertContains(response, "Not verified")
+        self.assertEqual(response.context["members"].get(), profile)
+        self.assertFalse(profile.is_verified)
+
     @override_settings(
         EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
         DEFAULT_FROM_EMAIL="Movement for Change <noreply@movementforchange.co.ke>",

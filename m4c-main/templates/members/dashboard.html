@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Member Dashboard | Movement for Change</title>
+  </head>
+  <body>
+    <main>
+      <h1>Member dashboard</h1>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Member</th>
+            <th scope="col">Phone</th>
+            <th scope="col">County</th>
+            <th scope="col">Verified</th>
+            <th scope="col">Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for member in members %}
+            <tr>
+              <td>{{ member.full_name|default:member.user.get_username }}</td>
+              <td>{{ member.phone_number }}</td>
+              <td>{{ member.county|default:"Not set" }}</td>
+              <td>{% if member.is_verified %}Verified{% else %}Not verified{% endif %}</td>
+              <td>{{ member.date_joined|date:"Y-m-d H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5">No members found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </main>
+  </body>
+</html>

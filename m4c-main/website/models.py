@@ -8,6 +8,8 @@ class MemberProfile(models.Model):
     phone_number = models.CharField(max_length=16, unique=True)
     county = models.CharField(max_length=80, blank=True, default="")
     interest = models.CharField(max_length=80, blank=True, default="")
+    is_verified = models.BooleanField(default=False)
+    date_joined = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.user.get_username()

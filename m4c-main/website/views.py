@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
@@ -246,6 +247,12 @@ def county_detail(request, slug):
             "county": {"name": "County", "description": "County profile not yet available."},
         }, status=404)
     return render(request, "county_detail.html", {"county": county})
+
+
+@staff_member_required
+def member_dashboard(request):
+    members = MemberProfile.objects.select_related("user").order_by("-date_joined")
+    return render(request, "members/dashboard.html", {"members": members})
 
 
 class MemberLoginView(LoginView):

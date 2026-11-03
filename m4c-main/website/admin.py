@@ -5,9 +5,9 @@ from .models import MemberProfile, VolunteerRegistration
 
 @admin.register(MemberProfile)
 class MemberProfileAdmin(admin.ModelAdmin):
-    list_display = ("full_name", "user", "county", "interest")
+    list_display = ("user", "phone_number", "county", "is_verified", "date_joined")
     search_fields = ("full_name", "user__username", "user__email", "phone_number")
-    list_filter = ("county", "interest")
+    list_filter = ("county", "is_verified")
 
 
 @admin.register(VolunteerRegistration)
