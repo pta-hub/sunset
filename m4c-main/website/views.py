@@ -60,7 +60,7 @@ REGIONAL_LEADERSHIP_PROFILES = [
         "role": "Nairobi Region Patron",
     },
     {
-        "image": "images/ann-mungai-central-region-patron.jpg",
+        "image": "images/ann-mungai-central-region-patron.png",
         "name": "Ann Mungai",
         "role": "Central Region Patron",
     },

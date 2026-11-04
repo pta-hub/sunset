@@ -72,7 +72,7 @@ class PublicPageTests(SimpleTestCase):
             self.assertContains(response, name)
         self.assertContains(response, "Nairobi Region Patron")
         self.assertContains(response, "images/alice-chumba-nairobi-region-patron.jpeg")
-        self.assertContains(response, "images/ann-mungai-central-region-patron.jpg")
+        self.assertContains(response, "images/ann-mungai-central-region-patron.png")
         for inactive_name in (
             "Brian Gitonga", "Martin Kor", "John Waithaka",
             "Wanjeri Esther Stacy", "Esther Muteri", "Moses Mwero",
