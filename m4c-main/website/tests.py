@@ -55,6 +55,8 @@ class PublicPageTests(SimpleTestCase):
         self.assertContains(response, "Regional Leadership")
         self.assertContains(response, "8 regional leaders")
         self.assertContains(response, "Elizabeth Situma")
+        self.assertContains(response, "Ann Mungai")
+        self.assertNotContains(response, "Kezziah Muihaki")
         self.assertContains(response, "Western Region Patron")
         self.assertContains(response, "National Chair")
         for name in (
@@ -70,6 +72,7 @@ class PublicPageTests(SimpleTestCase):
             self.assertContains(response, name)
         self.assertContains(response, "Nairobi Region Patron")
         self.assertContains(response, "images/alice-chumba-nairobi-region-patron.jpeg")
+        self.assertContains(response, "images/ann-mungai-central-region-patron.jpg")
         for inactive_name in (
             "Brian Gitonga", "Martin Kor", "John Waithaka",
             "Wanjeri Esther Stacy", "Esther Muteri", "Moses Mwero",
