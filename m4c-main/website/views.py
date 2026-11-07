@@ -37,7 +37,7 @@ VALUES = [
 STATS = [
     ("1000+", "Peace Ambassadors", "🕊️"),
     ("47", "Counties Engaged", "🗺️"),
-    ("15K+", "Citizens Mobilized", "👥"),
+    ("3.9M+", "Citizens Mobilized", "👥"),
     ("500+", "Community Leaders", "🎯"),
 ]
 
