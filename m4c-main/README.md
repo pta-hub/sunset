@@ -11,16 +11,19 @@ Run these commands from `m4c-main`:
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
+cp .env.example .env
+# Edit .env and configure DATABASE_URL for your PostgreSQL instance.
 python manage.py migrate
 python manage.py runserver 0.0.0.0:8000
 ```
 
-The default local database is SQLite. The homepage, leadership, Comrades, and
-county directory pages are available immediately; the interactive map uses
-the bundled county and ward GeoJSON data. `sh start.sh` collects static files,
-applies migrations, and launches the WSGI application with Gunicorn. For a
-local start without a configured key, set `DJANGO_DEBUG=true`; the script then
-stores a generated key in the ignored `.django_secret_key` file.
+If `DATABASE_URL` is unset, Django uses SQLite. The homepage, leadership,
+Comrades, and county directory pages are available immediately; the interactive
+map uses the bundled county and ward GeoJSON data. `sh start.sh` loads `.env`,
+collects static files, applies migrations, and launches the WSGI application
+with Gunicorn. For local startup without a configured key, set
+`DJANGO_DEBUG=true`; the script then stores a generated key in the ignored
+`.django_secret_key` file.
 
 ## Configuration
 
@@ -33,11 +36,25 @@ stores a generated key in the ignored `.django_secret_key` file.
 - `DJANGO_CSRF_TRUSTED_ORIGINS`: optional comma-separated HTTPS origins for
   additional deployment domains.
 - `DATABASE_URL`: optional PostgreSQL URL. Without it, Django uses local
-  SQLite. Configure a persistent PostgreSQL database in production.
+  SQLite. A local PostgreSQL URL is shown in `.env.example`; use the secure
+  connection URL supplied by your database provider in production.
 - `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_HOST_USER`,
   `EMAIL_HOST_PASSWORD`, and `DEFAULT_FROM_EMAIL`: SMTP settings for password
   reset messages. Without SMTP configuration, Django uses its console email
   backend for local development.
+- `GOOGLE_MAPS_API_KEY`: optional placeholder for a future Google Maps
+  integration. The current map uses bundled GeoJSON and does not require this
+  key. Restrict any Google API key to the required APIs and authorized domains.
+
+`.env` is ignored by git. Do not commit credentials; configure production
+variables through the hosting provider's secret/environment settings.
+
+To create an initial Django admin user during startup, configure all three
+variables `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_EMAIL`, and
+`DJANGO_SUPERUSER_PASSWORD` in the environment or local `.env` file. The startup
+script uses Django's `createsuperuser --noinput` command after migrations and
+skips creation if that superuser already exists. Keep the password secret; do
+not commit it to `.env.example` or source control.
 
 The default sender is `Movement for Change
 <noreply@movementforchange.co.ke>`. In production, authorize the sender domain

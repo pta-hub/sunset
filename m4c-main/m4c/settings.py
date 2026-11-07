@@ -3,8 +3,10 @@ from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.utils import get_random_secret_key
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
 DEBUG = os.environ.get("DJANGO_DEBUG", "false" if os.environ.get("RENDER") else "true").lower() == "true"
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
@@ -117,6 +119,8 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
+
+GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Africa/Nairobi"
